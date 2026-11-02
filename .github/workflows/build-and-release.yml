@@ -10,9 +10,6 @@ permissions:
   contents: write
 
 jobs:
-  # -------------------------------------------------------------
-  # Job: Build Desktop Binaries (Linux & Windows)
-  # -------------------------------------------------------------
   build-desktop:
     strategy:
       fail-fast: false
@@ -32,8 +29,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
-          cache-dependency-path: 'app/package-lock.json'
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -46,10 +41,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libssl-dev libayatana-appindicator3-dev librsvg2-dev
 
-      - name: Install npm dependencies
+      - name: Install npm dependencies & Build Frontend
         run: |
           cd app
           npm ci
+          npm run build
 
       - name: Build Desktop Binaries via Tauri
         uses: tauri-apps/tauri-action@v0
