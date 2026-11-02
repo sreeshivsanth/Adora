@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  navidrome:
+    image: deluan/navidrome:latest
+    container_name: adora-navidrome
+    restart: unless-stopped
+    user: 1000:1000
+    environment:
+      ND_SCANSCHEDULE: 1h
+      ND_LOGLEVEL: info
+      ND_BASEURL: ""
+      ND_ENABLETRANSCODINGCONFIG: "true"
+      ND_TRANSCODINGCACHESIZE: "500MB"
+      ND_DEFAULTTHEME: "dark"
+      ND_ENABLESHARING: "true"
+    volumes:
+      - ./data:/data
+      - ./music:/music:rw
+    ports:
+      - "127.0.0.1:4533:4533"
+
+  adora-hub:
+    build:
+      context: ./hub
+      dockerfile: Dockerfile
+    container_name: adora-hub
+    restart: unless-stopped
+    environment:
+      PORT: 8080
+      NAVIDROME_URL: http://navidrome:4533
+      DB_PATH: /data/navidrome.db
+      MUSIC_DIR: /music
+      JWT_SECRET: ${ADMIN_JWT_SECRET:-adora_production_secret_key_change_me_99}
+      STORAGE_HIGH_WATERMARK_GB: 160
+      STORAGE_TARGET_GB: 140
+      TWO_FACTOR_ENABLED: "false"
+    volumes:
+      - ./data:/data:rw
+      - ./music:/music:rw
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      - navidrome
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: adora-tunnel
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}

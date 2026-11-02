@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Adora Keep-Alive Watchdog every 4 hours
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=4h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

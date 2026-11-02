@@ -1,0 +1,8 @@
+[Unit]
+Description=Adora Keep-Alive Idle Prevention Watchdog
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/adora/server/scripts/adora-keepalive.sh
+User=root
