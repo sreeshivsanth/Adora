@@ -4,13 +4,14 @@ on:
   push:
     tags:
       - 'v*'
-    branches:
-      - main
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   # -------------------------------------------------------------
-  # Job 1: Build Desktop Releases (Linux & Windows)
+  # Job: Build Desktop Binaries (Linux & Windows)
   # -------------------------------------------------------------
   build-desktop:
     strategy:
@@ -39,13 +40,13 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
-      - name: Install Linux dependencies
+      - name: Install Linux build dependencies
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libssl-dev libayatana-appindicator3-dev librsvg2-dev
 
-      - name: Install App dependencies
+      - name: Install npm dependencies
         run: |
           cd app
           npm ci
@@ -58,41 +59,12 @@ jobs:
           projectPath: './app'
           tagName: ${{ github.ref_name }}
           releaseName: 'Adora ${{ github.ref_name }}'
-          releaseBody: 'Adora — Acoustic Sanctuary release with zero ads, high-fidelity audio, and social blend.'
+          releaseBody: |
+            ### Adora — Acoustic Sanctuary (${{ github.ref_name }})
+            - Zero-cost self-hosted architecture
+            - Lossless audio streaming & JIT on-demand ingestion
+            - Adora Blend real-time synchronized listening
+            - Adora Connect cross-device remote control
+            - Offline Vault storage
           releaseDraft: false
           prerelease: false
-
-  # -------------------------------------------------------------
-  # Job 2: Build Android APK
-  # -------------------------------------------------------------
-  build-android:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Java (JDK 17)
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: 17
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
-
-      - name: Install dependencies & Build Android Bundle
-        run: |
-          cd app
-          npm ci
-          npm run build
-          echo "[Adora CI] Android APK bundling pipeline configured"
