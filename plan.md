@@ -573,7 +573,7 @@ gantt
 - [ ] **Auto-Update Workflows:**
   - [x] Desktop auto-updater configured via Tauri Releases pipeline and GitHub Releases `latest.json`.
   - [x] Android in-app update checker configured via GitHub Releases API on new releases.
-- [x] **GitHub Repository CI:** Automated pipeline built in `.github/workflows/build-and-release.yml` building releases on tag push.
+- [x] **GitHub Repository CI:** Active and deployed at `https://github.com/sreeshivsanth/Adora` with automated build pipeline building releases on tag push.
 
 ### Phase 5: Verification & Acceptance Tests
 - [ ] **Acoustic Check:** Confirmed lossless audio playback (FLAC/Opus) without downsampling artifacts.
