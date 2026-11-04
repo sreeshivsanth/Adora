@@ -47,6 +47,6 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: adora-tunnel
     restart: unless-stopped
-    command: tunnel run
+    command: ${CLOUDFLARE_COMMAND:-tunnel --url http://adora-hub:8080 --no-autoupdate}
     environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}

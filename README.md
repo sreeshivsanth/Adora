@@ -95,10 +95,20 @@ npm run dev
 ```
 Open **`http://localhost:3000`** in your browser to experience the acoustic sanctuary!
 
-### 2. Deploying the Cloud Server Stack
+### 2. Deploying the Server Stack
+
+#### Option A: Instant Cloudflare Tunnel (Run Locally / Without Oracle VM)
+If you do not have an Oracle Cloud instance available, you can run the full Adora server locally or on any home machine and expose it globally via Cloudflare with zero open ports:
+```bash
+cd Adora/server
+./scripts/run-cloudflare.sh
+```
+* **Quick Tunnel (Default):** Zero configuration! Generates an instant, free `https://*.trycloudflare.com` URL.
+* **Custom Domain:** Add your `CLOUDFLARE_TUNNEL_TOKEN` in `server/.env`.
+
+#### Option B: Dedicated Oracle Cloud Always Free VM
 On your Oracle Cloud Always Free Ubuntu ARM64 instance:
 ```bash
-git clone https://github.com/sreeshivsanth/Adora.git
 cd Adora/server/scripts
 sudo ./setup-oracle.sh
 

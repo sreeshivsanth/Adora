@@ -46,7 +46,7 @@ export const AdminStudioModal: React.FC<AdminStudioModalProps> = ({
             </div>
             <div>
               <h3 className="text-xl font-bold text-[var(--text-primary)]">Adora Admin Studio</h3>
-              <p className="text-xs text-[var(--text-muted)]">Oracle Cloud Tenancy & Ecosystem Health</p>
+              <p className="text-xs text-[var(--text-muted)]">Cloudflare Edge & Ecosystem Health</p>
             </div>
           </div>
 
@@ -135,7 +135,7 @@ export const AdminStudioModal: React.FC<AdminStudioModalProps> = ({
           </div>
 
           <div className="text-[11px] text-[var(--text-muted)] bg-[var(--surface-card)] p-3 rounded-xl border border-[var(--border-subtle)]">
-            🔒 <strong>Zero-Trust Fortress Active:</strong> All admin tokens are ephemeral (15-minute expiration) with rolling refresh. Zero open public ports on Oracle VM.
+            🔒 <strong>Zero-Trust Fortress Active:</strong> All admin tokens are ephemeral (15-minute expiration) with rolling refresh. Zero open public ports via Cloudflare Tunnel.
           </div>
         </div>
 

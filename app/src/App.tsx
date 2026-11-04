@@ -422,7 +422,7 @@ export function App() {
                   <ShieldCheck className="w-4 h-4" />
                   Pruning Protection Active
                 </span>
-                <span>Oracle Cloud: 200 GB Storage</span>
+                <span>Cloudflare Edge • Secure Vault</span>
                 <span>Zero Ads • Lossless Audio</span>
               </div>
             </div>

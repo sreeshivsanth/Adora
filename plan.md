@@ -512,6 +512,7 @@ gantt
 
 ### Phase 1: Infrastructure & Cloud Foundation ($0.00 Cost)
 - [ ] **Oracle Cloud Compute:** Ubuntu 24.04 ARM64 instance launched on Always Free tier (2–4 OCPU, 12–24 GB RAM, 200 GB disk).
+- [x] **Temporary Cloudflare Tunnel Mode:** Implemented in `server/scripts/run-cloudflare.sh` and `server/docker-compose.yml` supporting instant zero-config Quick Tunnels (`*.trycloudflare.com`) or custom token named tunnels without Oracle Cloud VM dependencies.
 - [x] **Keep-Alive Script:** Script and systemd units created in `server/scripts/adora-keepalive.sh` & `.timer`, generating scheduled synthetic CPU bursts to permanently prevent idle reclamation.
 - [x] **Perimeter Firewall (UFW):** Automated in `server/scripts/setup-oracle.sh` with zero open public ports; all inbound ports (80, 443, 22, 4533) strictly closed to public IP.
 - [ ] **SSH Hardening:** Password authentication disabled; access restricted strictly to Ed25519 private cryptographic keys.
@@ -573,7 +574,7 @@ gantt
 - [ ] **Auto-Update Workflows:**
   - [x] Desktop auto-updater configured via Tauri Releases pipeline and GitHub Releases `latest.json`.
   - [x] Android in-app update checker configured via GitHub Releases API on new releases.
-- [x] **GitHub Repository CI:** Active and deployed at `https://github.com/sreeshivsanth/Adora` with automated build pipeline building releases on tag push.
+- [x] **GitHub Repository CI:** Active and deployed at `https://github.com/sreeshivsanth/Adora` with automated build pipeline building releases on tag push (Linux AppImage/deb dependency fixes and manual dispatch tag input applied).
 
 ### Phase 5: Verification & Acceptance Tests
 - [ ] **Acoustic Check:** Confirmed lossless audio playback (FLAC/Opus) without downsampling artifacts.
