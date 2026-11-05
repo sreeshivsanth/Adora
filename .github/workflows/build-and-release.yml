@@ -16,6 +16,8 @@ permissions:
 
 jobs:
   build-desktop:
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
