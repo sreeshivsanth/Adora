@@ -22,8 +22,10 @@ jobs:
         include:
           - platform: 'ubuntu-22.04'
             target: 'x86_64-unknown-linux-gnu'
+            args: '--bundles deb,appimage'
           - platform: 'windows-latest'
             target: 'x86_64-pc-windows-msvc'
+            args: '--bundles nsis,msi'
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -59,6 +61,7 @@ jobs:
           APPIMAGE_EXTRACT_AND_RUN: 1
         with:
           projectPath: './app'
+          args: ${{ matrix.args }}
           tagName: ${{ github.event.inputs.tag_name || github.ref_name }}
           releaseName: 'Adora ${{ github.event.inputs.tag_name || github.ref_name }}'
           releaseBody: |

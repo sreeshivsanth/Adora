@@ -4,3 +4,6 @@ target/
 .DS_Store
 *.log
 .env
+server/bin/
+server/data/
+server/music/
