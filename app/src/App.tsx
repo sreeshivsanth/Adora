@@ -138,14 +138,14 @@ export function App() {
     token: 'mock_ephemeral_token_15m'
   });
 
-  const [activeDevice] = useState<Device | null>({
+  const [activeDevice] = useState<Device | null>(() => ({
     deviceId: 'dev_laptop',
     deviceName: "Studio Desktop PC",
     userId: 'usr_admin',
     isPlaying: false,
     volume: 0.85,
     lastSeen: Date.now()
-  });
+  }));
 
   // Blend Session State
   const [blendSession, setBlendSession] = useState<BlendSession | null>(null);

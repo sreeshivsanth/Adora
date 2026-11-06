@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, X, HardDrive, Users, Activity, Trash2, CheckCircle2, AlertTriangle, KeyRound } from 'lucide-react';
+import { Shield, X, HardDrive, Users, Activity, Trash2, CheckCircle2, KeyRound } from 'lucide-react';
 import { AdminMetrics } from '../types';
 
 interface AdminStudioModalProps {
@@ -25,7 +25,6 @@ export const AdminStudioModal: React.FC<AdminStudioModalProps> = ({
   const { storage, system, activity } = metrics;
   const pinnedPercent = (storage.pinnedGB / storage.totalGB) * 100;
   const cachedPercent = (storage.cachedGB / storage.totalGB) * 100;
-  const usedPercent = (storage.usedGB / storage.totalGB) * 100;
 
   const handleExecutePrune = () => {
     onTriggerPrune();

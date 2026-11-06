@@ -34,7 +34,7 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
     "Nothing rushed, just peaceful acoustics."
   ];
 
-  const handleSendReaction = (emoji: string) => {
+  const handleSendReaction = (_emoji: string) => {
     confetti({
       particleCount: 25,
       spread: 60,

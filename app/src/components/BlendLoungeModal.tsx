@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, X, Share2, Copy, Check, Radio, Sparkles } from 'lucide-react';
+import { Users, X, Copy, Check, Radio, Sparkles } from 'lucide-react';
 import { BlendSession, Track } from '../types';
 import confetti from 'canvas-confetti';
 
@@ -32,7 +32,7 @@ export const BlendLoungeModal: React.FC<BlendLoungeModalProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleReaction = (emoji: string) => {
+  const handleReaction = (_emoji: string) => {
     confetti({
       particleCount: 20,
       spread: 50,
@@ -82,6 +82,16 @@ export const BlendLoungeModal: React.FC<BlendLoungeModalProps> = ({
                 {copied ? 'Copied Link' : 'Copy Invite'}
               </button>
             </div>
+
+            {currentTrack && (
+              <div className="p-3 rounded-2xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] flex items-center gap-3">
+                <img src={currentTrack.cover} alt="" className="w-9 h-9 rounded-xl object-cover" />
+                <div className="truncate">
+                  <p className="text-xs font-bold text-[var(--text-primary)] truncate">{currentTrack.title}</p>
+                  <p className="text-[11px] text-[var(--text-muted)] truncate">{currentTrack.artist}</p>
+                </div>
+              </div>
+            )}
 
             {/* Orbiting Avatar Campfire */}
             <div className="py-6 flex flex-col items-center justify-center gap-4">
