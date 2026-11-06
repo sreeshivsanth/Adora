@@ -145,9 +145,7 @@ if [ ! -d "node_modules" ]; then
   echo "[+] Installing hub dependencies..."
   npm install
 fi
-if [ ! -f "dist/index.js" ]; then
-  npm run build
-fi
+npm run build
 
 # Process cleanup handler
 cleanup() {

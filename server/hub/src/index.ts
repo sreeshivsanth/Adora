@@ -195,27 +195,27 @@ app.post('/api/auth/forgot-password', (req: Request, res: Response) => {
 // Just-In-Time (JIT) Ingestion & Worldwide Search
 // -------------------------------------------------------------
 
-// Curated seed tracks for instant ambient discovery
+// Curated seed tracks for instant ambient discovery (Full YouTube Music audio)
 const CURATED_SEED: Record<string, any[]> = {
   tamil: [
-    { id: 'itunes_1502476579', title: 'Vaathi Coming', artist: 'Anirudh Ravichander & Gana Balachandar', album: 'Master', language: 'tamil', durationSec: 230, cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', audioUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/91/3c/65/913c65a4-23ba-cb96-d667-332e9a263152/mzaf_7820170889985908480.plus.aac.p.m4a', isLocal: false },
-    { id: 'itunes_1556858076', title: 'Enjoy Enjaami', artist: 'Dhee, Arivu & Santhosh Narayanan', album: 'Enjoy Enjaami - Single', language: 'tamil', durationSec: 302, cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600', audioUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/55/bc/ec/55bcec29-0ec6-71d3-3f62-7e05fc8677c3/mzaf_10793738006095034606.plus.aac.p.m4a', isLocal: false },
-    { id: 'itunes_1583726481', title: 'Adiye', artist: 'Dhibu Ninan Thomas & Kapil Kapilan', album: 'Bachelor', language: 'tamil', durationSec: 254, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', audioUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview116/v4/44/21/53/442153eb-69fa-9486-cae7-c6b24ce4d339/mzaf_4020921200236474668.plus.aac.p.m4a', isLocal: false },
-    { id: 'itunes_1699923812', title: 'Hukum - Thalaivar Alappara', artist: 'Anirudh Ravichander & Super Subu', album: 'Jailer', language: 'tamil', durationSec: 207, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', audioUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/1f/22/e1/1f22e1e3-3e06-bf25-1823-376ca79d39ca/mzaf_17203649635071195604.plus.aac.p.m4a', isLocal: false }
+    { id: 'itunes_1502476579', title: 'Vaathi Coming', artist: 'Anirudh Ravichander & Gana Balachandar', album: 'Master', language: 'tamil', durationSec: 230, cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', audioUrl: '/api/stream/full?title=Vaathi+Coming&artist=Anirudh+Ravichander', isLocal: false },
+    { id: 'itunes_1556858076', title: 'Enjoy Enjaami', artist: 'Dhee, Arivu & Santhosh Narayanan', album: 'Enjoy Enjaami - Single', language: 'tamil', durationSec: 302, cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600', audioUrl: '/api/stream/full?title=Enjoy+Enjaami&artist=Dhee+Arivu', isLocal: false },
+    { id: 'itunes_1583726481', title: 'Adiye', artist: 'Dhibu Ninan Thomas & Kapil Kapilan', album: 'Bachelor', language: 'tamil', durationSec: 254, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', audioUrl: '/api/stream/full?title=Adiye&artist=Dhibu+Ninan+Thomas', isLocal: false },
+    { id: 'itunes_1699923812', title: 'Hukum - Thalaivar Alappara', artist: 'Anirudh Ravichander & Super Subu', album: 'Jailer', language: 'tamil', durationSec: 207, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', audioUrl: '/api/stream/full?title=Hukum+Thalaivar+Alappara&artist=Anirudh+Ravichander', isLocal: false }
   ],
   hindi: [
-    { id: 'itunes_1634938221', title: 'Kesariya', artist: 'Pritam, Arijit Singh & Amitabh Bhattacharya', album: 'Brahmastra', language: 'hindi', durationSec: 268, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', audioUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview112/v4/31/32/7a/31327ae0-81f1-c672-0ca0-302a2491fa58/mzaf_3991206190978716383.plus.aac.p.m4a', isLocal: false },
-    { id: 'itunes_1440782917', title: 'Arziyan', artist: 'A.R. Rahman, Javed Ali & Kailash Kher', album: 'Delhi-6', language: 'hindi', durationSec: 521, cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', audioUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/56/67/20/566720ea-d5e0-5231-c4fc-631d87179cb8/mzaf_7820170889985908480.plus.aac.p.m4a', isLocal: false },
-    { id: 'itunes_1163456789', title: 'Channa Mereya', artist: 'Pritam & Arijit Singh', album: 'Ae Dil Hai Mushkil', language: 'hindi', durationSec: 289, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', audioUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/09/b3/f5/09b3f545-236b-28f0-1a76-e3d6232598be/mzaf_3991206190978716383.plus.aac.p.m4a', isLocal: false }
+    { id: 'itunes_1634938221', title: 'Kesariya', artist: 'Pritam, Arijit Singh & Amitabh Bhattacharya', album: 'Brahmastra', language: 'hindi', durationSec: 268, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', audioUrl: '/api/stream/full?title=Kesariya&artist=Arijit+Singh', isLocal: false },
+    { id: 'itunes_1440782917', title: 'Arziyan', artist: 'A.R. Rahman, Javed Ali & Kailash Kher', album: 'Delhi-6', language: 'hindi', durationSec: 521, cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', audioUrl: '/api/stream/full?title=Arziyan&artist=A.R.+Rahman', isLocal: false },
+    { id: 'itunes_1163456789', title: 'Channa Mereya', artist: 'Pritam & Arijit Singh', album: 'Ae Dil Hai Mushkil', language: 'hindi', durationSec: 289, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', audioUrl: '/api/stream/full?title=Channa+Mereya&artist=Arijit+Singh', isLocal: false }
   ],
   english: [
-    { id: 'itunes_1440857781', title: 'Midnight City', artist: 'M83', album: 'Hurry Up, We\'re Dreaming', language: 'english', durationSec: 243, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', audioUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/7c/49/a7/7c49a710-1c09-a1b7-a37a-4ecba6beeb2c/mzaf_4020921200236474668.plus.aac.p.m4a', isLocal: false },
-    { id: 'itunes_1440833249', title: 'Blinding Lights', artist: 'The Weeknd', album: 'After Hours', language: 'english', durationSec: 200, cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600', audioUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/64/0f/c6/640fc638-348f-aa15-77b3-c15147572d49/mzaf_17203649635071195604.plus.aac.p.m4a', isLocal: false },
-    { id: 'itunes_647318188', title: 'Get Lucky', artist: 'Daft Punk feat. Pharrell Williams', album: 'Random Access Memories', language: 'english', durationSec: 369, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', audioUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/33/c4/62/33c46231-59ba-db05-a3d5-78e7c10b7f64/mzaf_7820170889985908480.plus.aac.p.m4a', isLocal: false }
+    { id: 'itunes_1440857781', title: 'Midnight City', artist: 'M83', album: 'Hurry Up, We\'re Dreaming', language: 'english', durationSec: 243, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', audioUrl: '/api/stream/full?title=Midnight+City&artist=M83', isLocal: false },
+    { id: 'itunes_1440833249', title: 'Blinding Lights', artist: 'The Weeknd', album: 'After Hours', language: 'english', durationSec: 200, cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600', audioUrl: '/api/stream/full?title=Blinding+Lights&artist=The+Weeknd', isLocal: false },
+    { id: 'itunes_647318188', title: 'Get Lucky', artist: 'Daft Punk feat. Pharrell Williams', album: 'Random Access Memories', language: 'english', durationSec: 369, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', audioUrl: '/api/stream/full?title=Get+Lucky&artist=Daft+Punk', isLocal: false }
   ],
   korean: [
-    { id: 'itunes_1660603593', title: 'Ditto', artist: 'NewJeans', album: 'NewJeans \'OMG\'', language: 'korean', durationSec: 185, cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600', audioUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview122/v4/13/be/13/13be1350-b8f4-2c06-8c90-84a86f1e29e9/mzaf_17203649635071195604.plus.aac.p.m4a', isLocal: false },
-    { id: 'itunes_1694764831', title: 'Super Shy', artist: 'NewJeans', album: 'Get Up', language: 'korean', durationSec: 154, cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600', audioUrl: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview116/v4/ec/3b/b1/ec3bb118-80e9-b5b0-a54d-fc50953835f8/mzaf_7820170889985908480.plus.aac.p.m4a', isLocal: false }
+    { id: 'itunes_1660603593', title: 'Ditto', artist: 'NewJeans', album: 'NewJeans \'OMG\'', language: 'korean', durationSec: 185, cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600', audioUrl: '/api/stream/full?title=Ditto&artist=NewJeans', isLocal: false },
+    { id: 'itunes_1694764831', title: 'Super Shy', artist: 'NewJeans', album: 'Get Up', language: 'korean', durationSec: 154, cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600', audioUrl: '/api/stream/full?title=Super+Shy&artist=NewJeans', isLocal: false }
   ]
 };
 
@@ -256,6 +256,11 @@ app.get('/api/search', optionalToken, async (req: AuthenticatedRequest, res: Res
       const localFileMp3 = path.join(MUSIC_DIR, langFolder, safeArtist, `${safeTitle}.mp3`);
       const isLocal = fs.existsSync(localFileMp3);
 
+      // Full YouTube Music audio stream endpoint (with fallback preview if needed)
+      const fullAudioUrl = isLocal
+        ? `/api/stream?path=${encodeURIComponent(path.relative(MUSIC_DIR, localFileMp3))}`
+        : `/api/stream/full?title=${encodeURIComponent(r.trackName)}&artist=${encodeURIComponent(r.artistName)}&id=${r.trackId}&fallback=${encodeURIComponent(r.previewUrl || '')}`;
+
       return {
         id: `itunes_${r.trackId}`,
         title: r.trackName,
@@ -264,9 +269,7 @@ app.get('/api/search', optionalToken, async (req: AuthenticatedRequest, res: Res
         language: language,
         durationSec: Math.round((r.trackTimeMillis || 0) / 1000),
         cover: coverUrl,
-        audioUrl: isLocal
-          ? `/api/stream?path=${encodeURIComponent(path.relative(MUSIC_DIR, localFileMp3))}`
-          : r.previewUrl,
+        audioUrl: fullAudioUrl,
         isLocal: isLocal,
         isDownloaded: isLocal,
         isStarred: false
@@ -285,6 +288,97 @@ app.get('/api/search', optionalToken, async (req: AuthenticatedRequest, res: Res
   }
 });
 
+// -------------------------------------------------------------
+// YouTube Music Direct Stream Engine & In-Memory Stream Cache
+// -------------------------------------------------------------
+
+interface StreamCacheEntry {
+  url: string;
+  expiresAt: number;
+}
+
+const streamUrlCache = new Map<string, StreamCacheEntry>();
+const inFlightResolutions = new Map<string, Promise<string>>();
+
+/**
+ * Resolves a direct high-fidelity Google Video Opus/WebM audio stream URL
+ * from YouTube Music using yt-dlp. Results are cached in memory for 3.5 hours.
+ */
+async function resolveYouTubeAudioStream(title: string, artist?: string): Promise<string> {
+  const cleanTitle = (title || '').trim();
+  const cleanArtist = (artist || '').trim();
+  const cacheKey = `${cleanTitle.toLowerCase()}:::${cleanArtist.toLowerCase()}`;
+  const now = Date.now();
+
+  const cached = streamUrlCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    return cached.url;
+  }
+
+  // De-duplicate simultaneous requests for the exact same track
+  if (inFlightResolutions.has(cacheKey)) {
+    return inFlightResolutions.get(cacheKey)!;
+  }
+
+  const resolvePromise = new Promise<string>((resolve, reject) => {
+    const ytdlpBinary = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
+    const searchQuery = `ytsearch1:${cleanTitle} ${cleanArtist} audio`;
+
+    console.log(`[YouTube Music Stream] Resolving direct audio stream for: "${cleanTitle}" by "${cleanArtist}"`);
+
+    const proc = spawn(ytdlpBinary, [
+      '--js-runtimes', 'node',
+      '--no-playlist',
+      '--no-warnings',
+      '-f', 'ba/b',
+      '-g',
+      searchQuery
+    ]);
+
+    let stdoutData = '';
+    let stderrData = '';
+
+    const timer = setTimeout(() => {
+      proc.kill('SIGKILL');
+      inFlightResolutions.delete(cacheKey);
+      reject(new Error(`Extraction timed out after 15 seconds for "${cleanTitle}"`));
+    }, 15000);
+
+    proc.stdout.on('data', (d) => { stdoutData += d.toString(); });
+    proc.stderr.on('data', (d) => { stderrData += d.toString(); });
+
+    proc.on('close', (code) => {
+      clearTimeout(timer);
+      inFlightResolutions.delete(cacheKey);
+
+      const lines = stdoutData.trim().split(/\r?\n/).map(l => l.trim());
+      const streamUrl = lines.find(l => l.startsWith('http://') || l.startsWith('https://'));
+
+      if (code === 0 && streamUrl) {
+        // Cache for 3.5 hours (Google Video CDN URLs typically expire after 6 hours)
+        streamUrlCache.set(cacheKey, {
+          url: streamUrl,
+          expiresAt: Date.now() + 3.5 * 60 * 60 * 1000
+        });
+        console.log(`[YouTube Music Stream] Successfully cached stream for: "${cleanTitle}"`);
+        resolve(streamUrl);
+      } else {
+        console.warn(`[YouTube Music Stream] yt-dlp failed (code ${code}): ${stderrData.slice(0, 200)}`);
+        reject(new Error(`yt-dlp extraction failed with code ${code}`));
+      }
+    });
+
+    proc.on('error', (err) => {
+      clearTimeout(timer);
+      inFlightResolutions.delete(cacheKey);
+      reject(err);
+    });
+  });
+
+  inFlightResolutions.set(cacheKey, resolvePromise);
+  return resolvePromise;
+}
+
 interface IngestJob {
   id: string;
   title: string;
@@ -296,39 +390,37 @@ interface IngestJob {
 }
 
 const activeJobs = new Map<string, IngestJob>();
+const activeIngestKeys = new Set<string>();
 
-app.post('/api/ingest', optionalToken, (req: AuthenticatedRequest, res: Response) => {
-  const { trackTitle, artist, language } = req.body;
-  if (!trackTitle) {
-    res.status(400).json({ error: 'trackTitle is required' });
-    return;
-  }
-
-  const cleanTitle = (trackTitle as string).trim();
-  const cleanArtist = (artist as string || 'Various Artists').trim();
-  const cleanLang = (language as string || 'all').toLowerCase();
-  const jobId = `job_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+/**
+ * Triggers background JIT download of 320kbps MP3 into server/music storage
+ */
+function triggerBackgroundIngest(trackTitle: string, artist: string, language: string = 'all') {
+  const cleanTitle = (trackTitle || '').trim();
+  const cleanArtist = (artist || 'Various Artists').trim();
+  const cleanLang = (language || 'all').toLowerCase();
 
   const safeLang = cleanLang === 'all' ? 'vault' : cleanLang.replace(/[^a-z0-9]/gi, '_');
   const safeArtist = cleanArtist.replace(/[^a-z0-9 _-]/gi, '_');
   const safeTitle = cleanTitle.replace(/[^a-z0-9 _-]/gi, '_');
 
   const targetDir = path.join(MUSIC_DIR, safeLang, safeArtist);
-  fs.mkdirSync(targetDir, { recursive: true });
-
   const targetFile = path.join(targetDir, `${safeTitle}.mp3`);
   const relativePath = path.relative(MUSIC_DIR, targetFile);
 
   if (fs.existsSync(targetFile)) {
-    res.json({
-      jobId,
-      status: 'completed',
-      message: 'Track is already in local music storage.',
-      audioUrl: `/api/stream?path=${encodeURIComponent(relativePath)}`
-    });
-    return;
+    return { targetFile, relativePath, jobId: 'already_downloaded', alreadyExists: true };
   }
 
+  const ingestKey = `${safeLang}/${safeArtist}/${safeTitle}`.toLowerCase();
+  if (activeIngestKeys.has(ingestKey)) {
+    return { targetFile, relativePath, jobId: 'downloading', alreadyExists: false };
+  }
+
+  activeIngestKeys.add(ingestKey);
+  fs.mkdirSync(targetDir, { recursive: true });
+
+  const jobId = `job_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const job: IngestJob = {
     id: jobId,
     title: cleanTitle,
@@ -339,15 +431,6 @@ app.post('/api/ingest', optionalToken, (req: AuthenticatedRequest, res: Response
   };
   activeJobs.set(jobId, job);
 
-  // Return immediate response with future audio stream endpoint
-  res.json({
-    jobId,
-    status: 'downloading',
-    message: `Background JIT ingestion initiated for "${cleanTitle}".`,
-    audioUrl: `/api/stream?path=${encodeURIComponent(relativePath)}`
-  });
-
-  // Background worker: yt-dlp audio download
   const ytdlpBinary = fs.existsSync(YTDLP_PATH) ? YTDLP_PATH : 'yt-dlp';
   const outTemplate = path.join(targetDir, `${safeTitle}.%(ext)s`);
   const searchQuery = `ytsearch1:${cleanTitle} ${cleanArtist} official audio`;
@@ -368,6 +451,7 @@ app.post('/api/ingest', optionalToken, (req: AuthenticatedRequest, res: Response
   ]);
 
   child.on('close', (code) => {
+    activeIngestKeys.delete(ingestKey);
     if (code === 0 && fs.existsSync(targetFile)) {
       job.status = 'completed';
       job.progress = 100;
@@ -381,6 +465,34 @@ app.post('/api/ingest', optionalToken, (req: AuthenticatedRequest, res: Response
       console.warn(`[Adora Ingestion] Failed to ingest "${cleanTitle}": code ${code}`);
     }
   });
+
+  return { targetFile, relativePath, jobId, alreadyExists: false };
+}
+
+app.post('/api/ingest', optionalToken, (req: AuthenticatedRequest, res: Response) => {
+  const { trackTitle, artist, language } = req.body;
+  if (!trackTitle) {
+    res.status(400).json({ error: 'trackTitle is required' });
+    return;
+  }
+
+  const result = triggerBackgroundIngest(trackTitle, artist, language);
+  if (result.alreadyExists) {
+    res.json({
+      jobId: result.jobId,
+      status: 'completed',
+      message: 'Track is already in local music storage.',
+      audioUrl: `/api/stream?path=${encodeURIComponent(result.relativePath)}`
+    });
+    return;
+  }
+
+  res.json({
+    jobId: result.jobId,
+    status: 'downloading',
+    message: `Background JIT ingestion initiated for "${trackTitle}".`,
+    audioUrl: `/api/stream?path=${encodeURIComponent(result.relativePath)}`
+  });
 });
 
 app.get('/api/ingest/status/:jobId', (req: Request, res: Response) => {
@@ -390,6 +502,57 @@ app.get('/api/ingest/status/:jobId', (req: Request, res: Response) => {
     return;
   }
   res.json(job);
+});
+
+// Full-length YouTube Music Audio Stream Endpoint
+app.get('/api/stream/full', async (req: Request, res: Response) => {
+  const title = (req.query.title as string || '').trim();
+  const artist = (req.query.artist as string || '').trim();
+  const language = (req.query.language as string || 'all').trim();
+  const fallbackUrl = (req.query.fallback as string || '').trim();
+
+  if (!title) {
+    res.status(400).json({ error: 'title parameter is required' });
+    return;
+  }
+
+  // 1. If file already exists in local storage, stream locally via byte-range server
+  const safeLang = language === 'all' ? 'vault' : language.replace(/[^a-z0-9]/gi, '_');
+  const safeArtist = (artist || 'Various Artists').replace(/[^a-z0-9 _-]/gi, '_');
+  const safeTitle = title.replace(/[^a-z0-9 _-]/gi, '_');
+
+  const possibleExtensions = ['.mp3', '.m4a', '.opus', '.flac'];
+  for (const ext of possibleExtensions) {
+    const candidateLocal = path.join(MUSIC_DIR, safeLang, safeArtist, `${safeTitle}${ext}`);
+    if (fs.existsSync(candidateLocal)) {
+      const relPath = path.relative(MUSIC_DIR, candidateLocal);
+      res.redirect(302, `/api/stream?path=${encodeURIComponent(relPath)}`);
+      return;
+    }
+    // Also check generic vault
+    const vaultLocal = path.join(MUSIC_DIR, 'vault', safeArtist, `${safeTitle}${ext}`);
+    if (fs.existsSync(vaultLocal)) {
+      const relPath = path.relative(MUSIC_DIR, vaultLocal);
+      res.redirect(302, `/api/stream?path=${encodeURIComponent(relPath)}`);
+      return;
+    }
+  }
+
+  // 2. Trigger asynchronous background ingestion into local disk for offline preservation
+  triggerBackgroundIngest(title, artist, language);
+
+  // 3. Resolve direct YouTube Music Opus/WebM audio stream
+  try {
+    const streamUrl = await resolveYouTubeAudioStream(title, artist);
+    res.redirect(302, streamUrl);
+  } catch (err: any) {
+    console.warn(`[Stream Full Error] Could not extract stream for "${title}":`, err.message);
+    if (fallbackUrl && fallbackUrl.startsWith('http')) {
+      res.redirect(302, fallbackUrl);
+    } else {
+      res.status(502).json({ error: 'Failed to extract audio stream from YouTube Music', message: err.message });
+    }
+  }
 });
 
 // -------------------------------------------------------------
@@ -671,4 +834,18 @@ function broadcastToRoom(roomId: string, message: any) {
 
 server.listen(PORT, () => {
   console.log(`[Adora Hub] Service listening on port ${PORT} (HTTP & WebSockets)`);
+
+  // Pre-warm curated seed tracks into cache for instantaneous zero-latency playback
+  setTimeout(async () => {
+    console.log('[YouTube Music Stream] Pre-warming popular seed tracks into cache...');
+    const allSeeds = Object.values(CURATED_SEED).flat();
+    for (const seed of allSeeds.slice(0, 8)) {
+      try {
+        await resolveYouTubeAudioStream(seed.title, seed.artist);
+      } catch (err) {
+        // Silently continue if pre-warm fails
+      }
+    }
+    console.log('[YouTube Music Stream] Pre-warming complete. Curated tracks ready for instant playback.');
+  }, 2000);
 });

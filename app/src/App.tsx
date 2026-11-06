@@ -417,6 +417,11 @@ export function App() {
       <audio
         ref={audioRef}
         onLoadedMetadata={handleLoadedMetadata}
+        onCanPlay={() => {
+          if (isPlaying && audioRef.current && audioRef.current.paused) {
+            audioRef.current.play().catch(e => console.warn('[Adora Playback]', e));
+          }
+        }}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleNext}
       />
