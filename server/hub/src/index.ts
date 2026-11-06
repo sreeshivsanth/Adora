@@ -241,6 +241,8 @@ app.get('/api/search', optionalToken, async (req: AuthenticatedRequest, res: Res
   const language = (req.query.language as string || 'all').toLowerCase();
   const mood = (req.query.mood as string || 'all').toLowerCase();
   const genre = (req.query.genre as string || 'all').toLowerCase();
+  const region = ((req.query.region as string) || 'IN').toUpperCase();
+  const itunesCountry = region === 'GLOBAL' ? 'US' : region;
 
   // If query is blank and all filters are default, return curated collection
   if (!query && mood === 'all' && genre === 'all') {
@@ -267,13 +269,14 @@ app.get('/api/search', optionalToken, async (req: AuthenticatedRequest, res: Res
       // Mode B: Filter Discovery Mode (No song/artist name entered)
       const parts: string[] = [];
       if (language !== 'all') parts.push(language);
-      else parts.push('india');
+      else if (region === 'IN') parts.push('india');
+      else parts.push('top hits');
       if (mood !== 'all') parts.push(`${mood} songs`);
       if (genre !== 'all') parts.push(genre);
       searchTerm = parts.join(' ');
     }
 
-    const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&country=IN&entity=song&limit=45`;
+    const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&country=${itunesCountry}&entity=song&limit=45`;
     const response = await fetch(itunesUrl);
 
     if (!response.ok) {
@@ -385,24 +388,26 @@ interface TrendingCacheEntry {
 const trendingCache = new Map<string, TrendingCacheEntry>();
 
 app.get('/api/trending', optionalToken, async (req: AuthenticatedRequest, res: Response) => {
+  const region = ((req.query.region as string) || 'IN').toUpperCase();
   const languagesQuery = (req.query.languages as string || req.query.language as string || 'tamil,hindi,english').toLowerCase();
   const languages = languagesQuery.split(',').map(s => s.trim()).filter(Boolean);
-  const cacheKey = languages.sort().join(',');
+  const cacheKey = `${region}:::${languages.sort().join(',')}`;
   const now = Date.now();
 
   const cached = trendingCache.get(cacheKey);
   if (cached && cached.expiresAt > now) {
-    res.json({ results: cached.results, count: cached.results.length, cached: true });
+    res.json({ results: cached.results, count: cached.results.length, region, cached: true });
     return;
   }
 
   try {
     const collectedTracks: any[] = [];
     const seenTitles = new Set<string>();
+    const itunesCountry = (region === 'GLOBAL' ? 'us' : region.toLowerCase());
 
-    // 1. Fetch Official iTunes India Top Songs Chart (Top 35 nationwide in India)
+    // 1. Fetch Official Apple Music Top Songs Chart for the user's specific region
     try {
-      const topRssUrl = 'https://itunes.apple.com/in/rss/topsongs/limit=35/json';
+      const topRssUrl = `https://itunes.apple.com/${itunesCountry}/rss/topsongs/limit=35/json`;
       const rssResp = await fetch(topRssUrl, { headers: { 'User-Agent': 'Adora-Sanctuary/1.0' } });
       if (rssResp.ok) {
         const rssData: any = await rssResp.json();
@@ -435,7 +440,7 @@ app.get('/api/trending', optionalToken, async (req: AuthenticatedRequest, res: R
             title,
             artist,
             album,
-            language: 'all',
+            language: region.toLowerCase(),
             durationSec: 215,
             cover: coverUrl,
             audioUrl: fullAudioUrl,
@@ -452,11 +457,12 @@ app.get('/api/trending', optionalToken, async (req: AuthenticatedRequest, res: R
       console.warn('[Adora Trending RSS Error]', rssErr);
     }
 
-    // 2. Query Regional India Trending Hits for each preferred language (up to 3 languages)
+    // 2. Query Regional Trending Hits for each preferred language within that region
     for (const lang of languages.slice(0, 3)) {
       try {
-        const langQuery = `trending ${lang} hits india`;
-        const langUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(langQuery)}&country=IN&entity=song&limit=15`;
+        const queryCountry = (region === 'GLOBAL' ? 'US' : region);
+        const langQuery = `trending ${lang} hits`;
+        const langUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(langQuery)}&country=${queryCountry}&entity=song&limit=15`;
         const langResp = await fetch(langUrl, { headers: { 'User-Agent': 'Adora-Sanctuary/1.0' } });
         if (langResp.ok) {
           const langData: any = await langResp.json();
@@ -493,7 +499,7 @@ app.get('/api/trending', optionalToken, async (req: AuthenticatedRequest, res: R
               isStarred: false,
               releaseYear: r.releaseDate ? new Date(r.releaseDate).getFullYear() : 2026,
               mood: inferredMood,
-              genre: r.primaryGenreName || 'Indian'
+              genre: r.primaryGenreName || 'Regional Hit'
             });
           }
         }
@@ -508,7 +514,7 @@ app.get('/api/trending', optionalToken, async (req: AuthenticatedRequest, res: R
       expiresAt: now + 20 * 60 * 1000
     });
 
-    res.json({ results: collectedTracks, count: collectedTracks.length });
+    res.json({ results: collectedTracks, count: collectedTracks.length, region });
   } catch (err: any) {
     console.error('[Adora Trending Error]', err);
     res.status(500).json({ error: 'Failed to fetch trending songs', details: err.message });
@@ -880,10 +886,14 @@ app.get('/api/user/preferences', optionalToken, (req: AuthenticatedRequest, res:
     if (fs.existsSync(PREFERENCES_FILE)) {
       const allPrefs = JSON.parse(fs.readFileSync(PREFERENCES_FILE, 'utf-8'));
       const userPrefs = allPrefs[userId] || {
+        region: 'IN',
         preferredLanguages: ['tamil', 'hindi', 'english'],
         favoriteArtists: ['A.R. Rahman', 'Anirudh Ravichander', 'Arijit Singh', 'The Weeknd'],
         onboardingCompleted: false
       };
+      if (!userPrefs.region) {
+        userPrefs.region = 'IN';
+      }
       res.json({ preferences: userPrefs });
       return;
     }
@@ -891,6 +901,7 @@ app.get('/api/user/preferences', optionalToken, (req: AuthenticatedRequest, res:
 
   res.json({
     preferences: {
+      region: 'IN',
       preferredLanguages: ['tamil', 'hindi', 'english'],
       favoriteArtists: ['A.R. Rahman', 'Anirudh Ravichander', 'Arijit Singh', 'The Weeknd'],
       onboardingCompleted: false
@@ -900,7 +911,7 @@ app.get('/api/user/preferences', optionalToken, (req: AuthenticatedRequest, res:
 
 app.post('/api/user/preferences', optionalToken, (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user?.id || 'default_user';
-  const { preferredLanguages, favoriteArtists, onboardingCompleted } = req.body;
+  const { region, preferredLanguages, favoriteArtists, onboardingCompleted } = req.body;
 
   let allPrefs: Record<string, any> = {};
   try {
@@ -910,6 +921,7 @@ app.post('/api/user/preferences', optionalToken, (req: AuthenticatedRequest, res
   } catch (e) {}
 
   allPrefs[userId] = {
+    region: typeof region === 'string' && region.trim() ? region.trim().toUpperCase() : (allPrefs[userId]?.region || 'IN'),
     preferredLanguages: Array.isArray(preferredLanguages) ? preferredLanguages : ['tamil', 'hindi', 'english'],
     favoriteArtists: Array.isArray(favoriteArtists) ? favoriteArtists : [],
     onboardingCompleted: Boolean(onboardingCompleted)

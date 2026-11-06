@@ -27,6 +27,7 @@ export interface Playlist {
 }
 
 export interface UserPreferences {
+  region: string; // Country code e.g. 'IN', 'US', 'GB', 'CA', etc.
   preferredLanguages: string[];
   favoriteArtists: string[];
   onboardingCompleted: boolean;

@@ -15,7 +15,8 @@ import { UserSettingsModal } from './components/UserSettingsModal';
 import { OnboardingModal } from './components/OnboardingModal';
 import { AppTrendsView } from './components/AppTrendsView';
 import { Track, User, Device, BlendSession, AdminMetrics, Playlist, UserPreferences } from './types';
-import { Sparkles, Radio, CheckCircle, ShieldCheck, Flame, History, FolderPlus, Play, Plus, Music, Disc3, Clock, TrendingUp } from 'lucide-react';
+import { Sparkles, Radio, CheckCircle, ShieldCheck, Flame, History, FolderPlus, Play, Plus, Music, Disc3, Clock, TrendingUp, Search } from 'lucide-react';
+import { REGIONS, getRegionByCode } from './data/regions';
 import { searchTracks, requestIngest, fetchLocalTracks, resolveAudioUrl, fetchUserPreferences, saveUserPreferences, fetchUserPlaylists, saveUserPlaylists, fetchTrendingTracks, recordTelemetryPlay } from './services/api';
 
 const INITIAL_TRACKS: Track[] = [
@@ -150,6 +151,7 @@ export default function App() {
   const [selectedGenre, setSelectedGenre] = useState<string>('all');
   const [selectedYearRange, setSelectedYearRange] = useState<{ min: number; max: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchActive, setIsSearchActive] = useState(false);
   const [trendingTracks, setTrendingTracks] = useState<Track[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -194,18 +196,22 @@ export default function App() {
     try {
       const saved = localStorage.getItem('adora_user_prefs');
       return saved ? JSON.parse(saved) : {
+        region: 'IN',
         preferredLanguages: ['tamil', 'hindi', 'english'],
         favoriteArtists: ['A.R. Rahman', 'Anirudh Ravichander', 'Arijit Singh'],
         onboardingCompleted: false
       };
     } catch {
       return {
+        region: 'IN',
         preferredLanguages: ['tamil', 'hindi', 'english'],
         favoriteArtists: ['A.R. Rahman', 'Anirudh Ravichander', 'Arijit Singh'],
         onboardingCompleted: false
       };
     }
   });
+
+  const currentRegion = getRegionByCode(userPreferences.region);
 
   // Modals
   const [isLivingRoomOpen, setIsLivingRoomOpen] = useState(false);
@@ -372,7 +378,10 @@ export default function App() {
     const timer = setTimeout(async () => {
       try {
         const queryTerm = searchQuery.trim();
-        const data = await searchTracks(queryTerm, selectedLanguage, selectedMood, selectedGenre, currentUser?.token);
+        if (queryTerm.length > 0) {
+          setIsSearchActive(true);
+        }
+        const data = await searchTracks(queryTerm, selectedLanguage, selectedMood, selectedGenre, userPreferences.region || 'IN', currentUser?.token);
         if (data && Array.isArray(data.results)) {
           setTracks(data.results);
         }
@@ -382,14 +391,17 @@ export default function App() {
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, selectedLanguage, selectedMood, selectedGenre, currentUser?.token]);
+  }, [searchQuery, selectedLanguage, selectedMood, selectedGenre, userPreferences.region, currentUser?.token]);
 
   // Explicit Search Execution (invoked via Enter key or Initiate Search button)
   const handleExecuteSearch = async (overrideQuery?: string) => {
     setIsSearching(true);
+    setIsSearchActive(true);
+    setCurrentTab('studio');
+    setActivePlaylistId(null);
     try {
       const q = overrideQuery !== undefined ? overrideQuery : searchQuery.trim();
-      const data = await searchTracks(q, selectedLanguage, selectedMood, selectedGenre, currentUser?.token);
+      const data = await searchTracks(q, selectedLanguage, selectedMood, selectedGenre, userPreferences.region || 'IN', currentUser?.token);
       if (data && Array.isArray(data.results)) {
         setTracks(data.results);
         if (q) {
@@ -406,10 +418,10 @@ export default function App() {
     }
   };
 
-  // Live India Trending Hits (Tailored to preferred languages)
+  // Live Regional Trending Hits (Tailored to user region & preferred languages)
   useEffect(() => {
     let active = true;
-    fetchTrendingTracks(userPreferences.preferredLanguages, currentUser?.token)
+    fetchTrendingTracks(userPreferences.preferredLanguages, userPreferences.region || 'IN', currentUser?.token)
       .then(res => {
         if (active && res && Array.isArray(res.results)) {
           setTrendingTracks(res.results);
@@ -420,7 +432,7 @@ export default function App() {
       });
 
     return () => { active = false; };
-  }, [userPreferences.preferredLanguages, currentUser?.token]);
+  }, [userPreferences.preferredLanguages, userPreferences.region, currentUser?.token]);
 
   // Initial load: Fetch local downloaded library from server
   useEffect(() => {
@@ -611,6 +623,7 @@ export default function App() {
 
   // Logo Click / Home Handler: Clears all filters and returns to Home pure view
   const handleGoHome = () => {
+    setIsSearchActive(false);
     setCurrentTab('studio');
     setActivePlaylistId(null);
     setSearchQuery('');
@@ -706,21 +719,34 @@ export default function App() {
 
   // Filtered tracks with Mood, Language, and Release Year Range support
   const filteredTracks = useMemo(() => {
-    return tracks.filter(t => {
-      // 1. Vault tab filter
-      if (currentTab === 'vault') {
+    // 1. Vault tab filter
+    if (currentTab === 'vault') {
+      return tracks.filter(t => {
         const matchesQuery = !searchQuery || 
           t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
           t.artist.toLowerCase().includes(searchQuery.toLowerCase());
         return (t.isStarred || t.isDownloaded) && matchesQuery;
-      }
+      });
+    }
 
-      // 2. Language filter
-      if (selectedLanguage !== 'all' && t.language !== selectedLanguage) {
+    // 2. Active Search / Filter Discovery mode
+    // When search is active, the backend API has already queried iTunes with the user's keywords, mood, genre & language.
+    // We only apply year range if selected.
+    if (isSearchActive || searchQuery.trim().length > 0) {
+      if (selectedYearRange) {
+        return tracks.filter(t => !t.releaseYear || (t.releaseYear >= selectedYearRange.min && t.releaseYear <= selectedYearRange.max));
+      }
+      return tracks;
+    }
+
+    // 3. Normal Home Discovery mode (browsing curated songs)
+    return tracks.filter(t => {
+      // Language filter
+      if (selectedLanguage !== 'all' && t.language !== selectedLanguage && t.language !== 'all') {
         return false;
       }
 
-      // 3. Mood filter
+      // Mood filter
       if (selectedMood !== 'all') {
         const songMood = (t.mood || '').toLowerCase();
         if (songMood && songMood !== selectedMood.toLowerCase()) {
@@ -728,7 +754,7 @@ export default function App() {
         }
       }
 
-      // 4. Genre filter
+      // Genre filter
       if (selectedGenre !== 'all') {
         const songGenre = (t.genre || '').toLowerCase();
         if (songGenre && !songGenre.includes(selectedGenre.toLowerCase())) {
@@ -736,7 +762,7 @@ export default function App() {
         }
       }
 
-      // 5. Release Year Range filter
+      // Release Year Range filter
       if (selectedYearRange && t.releaseYear) {
         if (t.releaseYear < selectedYearRange.min || t.releaseYear > selectedYearRange.max) {
           return false;
@@ -745,7 +771,7 @@ export default function App() {
 
       return true;
     });
-  }, [tracks, currentTab, searchQuery, selectedLanguage, selectedMood, selectedGenre, selectedYearRange]);
+  }, [tracks, currentTab, isSearchActive, searchQuery, selectedLanguage, selectedMood, selectedGenre, selectedYearRange]);
 
   // Active playlist resolution if user clicked a playlist
   const activePlaylist = useMemo(() => {
@@ -851,9 +877,81 @@ export default function App() {
               onToggleDownload={handleToggleDownload}
               onAddToQueue={handleAddToQueue}
             />
+          ) : (isSearchActive || searchQuery.trim().length > 0) ? (
+            /* VIEW B: Dedicated Search & Filter Discovery Results */
+            <div className="flex flex-col gap-6 animate-fadeIn">
+              {/* Search Results Header & Controls */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-3xl bg-[var(--surface-card)] border border-[var(--border-subtle)] shadow-sm">
+                <div className="flex items-center gap-3.5">
+                  <div className="p-3 rounded-2xl bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]">
+                    <Search className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold font-serif text-[var(--text-primary)]">
+                      {searchQuery.trim()
+                        ? `Search Results for "${searchQuery.trim()}"`
+                        : `Filter Discovery Results`}
+                    </h2>
+                    <p className="text-xs text-[var(--text-muted)] mt-0.5 flex items-center gap-1.5 flex-wrap">
+                      <span className="font-semibold text-[var(--text-primary)]">{filteredTracks.length} tracks found</span>
+                      <span>•</span>
+                      <span>{currentRegion.name} {currentRegion.flag}</span>
+                      {selectedLanguage !== 'all' && (
+                        <>
+                          <span>•</span>
+                          <span className="text-[var(--accent-primary)] font-medium">{selectedLanguage.toUpperCase()}</span>
+                        </>
+                      )}
+                      {selectedMood !== 'all' && (
+                        <>
+                          <span>•</span>
+                          <span className="text-[var(--accent-primary)] font-medium">{selectedMood.toUpperCase()} MOOD</span>
+                        </>
+                      )}
+                      {selectedGenre !== 'all' && (
+                        <>
+                          <span>•</span>
+                          <span className="text-[var(--accent-primary)] font-medium">{selectedGenre.toUpperCase()}</span>
+                        </>
+                      )}
+                      {selectedYearRange && (
+                        <>
+                          <span>•</span>
+                          <span>{selectedYearRange.min}–{selectedYearRange.max}</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-auto">
+                  <button
+                    onClick={handleGoHome}
+                    className="px-4 py-2 rounded-full bg-[var(--surface-hover)] hover:bg-[var(--surface-card)] border border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1.5 transition-all shadow-sm hover:scale-105 active:scale-95"
+                  >
+                    <span>← Back to Home Feed</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Direct Search Track List */}
+              <TrackList
+                tracks={filteredTracks}
+                currentTrack={currentTrack}
+                isPlaying={isPlaying}
+                onSelectTrack={handleSelectTrack}
+                onToggleFavorite={handleToggleFavorite}
+                onToggleDownload={handleToggleDownload}
+                onIngestOnlineTrack={handleIngestTrack}
+                onAddToQueue={handleAddToQueue}
+                onAddToPlaylist={(track) => setPlaylistTrackToAdd(track)}
+                title=""
+                subtitle=""
+              />
+            </div>
           ) : (
             <>
-              {/* VIEW B: Normal Home Discovery Feed */}
+              {/* VIEW C: Normal Home Discovery Feed */}
 
               {/* Hero Banner: Current Track Showcase */}
               {currentTrack && (
@@ -1039,18 +1137,18 @@ export default function App() {
                 </div>
               )}
 
-              {/* HOME SECTION 3: Trending Now (Based on user taste) */}
+              {/* HOME SECTION 3: Trending Now (Based on user region & taste) */}
               {!searchQuery && currentTab === 'studio' && trendingTracks.length > 0 && (
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Flame className="w-4 h-4 text-amber-500" />
                       <h3 className="text-base font-bold font-serif text-[var(--text-primary)]">
-                        Trending For You
+                        Trending in {currentRegion.name} {currentRegion.flag}
                       </h3>
                     </div>
                     <span className="text-[11px] text-[var(--text-muted)]">
-                      Tuned to {userPreferences.preferredLanguages.join(', ')}
+                      Regional Charts tuned to {userPreferences.preferredLanguages.join(', ')}
                     </span>
                   </div>
 

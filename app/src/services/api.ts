@@ -32,7 +32,14 @@ export async function login(username: string, password?: string, otp?: string) {
   return res.json();
 }
 
-export async function searchTracks(query: string, language: string = 'all', mood: string = 'all', genre: string = 'all', token?: string) {
+export async function searchTracks(
+  query: string, 
+  language: string = 'all', 
+  mood: string = 'all', 
+  genre: string = 'all', 
+  region: string = 'IN',
+  token?: string
+) {
   const headers: Record<string, string> = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
@@ -41,6 +48,7 @@ export async function searchTracks(query: string, language: string = 'all', mood
   if (language && language !== 'all') params.append('language', language);
   if (mood && mood !== 'all') params.append('mood', mood);
   if (genre && genre !== 'all') params.append('genre', genre);
+  if (region) params.append('region', region);
 
   const res = await fetchWithFallback(`/api/search?${params.toString()}`, {
     headers
@@ -48,11 +56,15 @@ export async function searchTracks(query: string, language: string = 'all', mood
   return res.json();
 }
 
-export async function fetchTrendingTracks(languages: string[] = ['tamil', 'hindi', 'english'], token?: string) {
+export async function fetchTrendingTracks(
+  languages: string[] = ['tamil', 'hindi', 'english'], 
+  region: string = 'IN',
+  token?: string
+) {
   const headers: Record<string, string> = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetchWithFallback(`/api/trending?languages=${encodeURIComponent(languages.join(','))}`, {
+  const res = await fetchWithFallback(`/api/trending?languages=${encodeURIComponent(languages.join(','))}&region=${encodeURIComponent(region)}`, {
     headers
   });
   return res.json();
@@ -139,7 +151,7 @@ export async function fetchUserPreferences(token?: string) {
   return res.json();
 }
 
-export async function saveUserPreferences(prefs: { preferredLanguages: string[]; favoriteArtists: string[]; onboardingCompleted: boolean }, token?: string) {
+export async function saveUserPreferences(prefs: { region?: string; preferredLanguages: string[]; favoriteArtists: string[]; onboardingCompleted: boolean }, token?: string) {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 

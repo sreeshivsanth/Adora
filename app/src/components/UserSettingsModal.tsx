@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Settings, Check, Plus, Sparkles, Heart, Globe2, Music2 } from 'lucide-react';
+import { X, Settings, Check, Plus, Sparkles, Heart, Globe2, MapPin } from 'lucide-react';
 import { UserPreferences } from '../types';
+import { REGIONS, RegionOption, getRegionByCode } from '../data/regions';
 import { searchMatchingArtists, ARTISTS_DATABASE } from '../data/artists';
 
 interface UserSettingsModalProps {
@@ -29,6 +30,9 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   preferences,
   onSavePreferences
 }) => {
+  const [selectedRegion, setSelectedRegion] = useState<string>(
+    preferences?.region || 'IN'
+  );
   const [selectedLangs, setSelectedLangs] = useState<string[]>(
     preferences?.preferredLanguages || ['tamil', 'hindi', 'english']
   );
@@ -39,9 +43,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 
   if (!isOpen) return null;
 
-  const matchingSuggestions = newArtistInput.trim()
-    ? searchMatchingArtists(newArtistInput.trim(), 8)
-    : [];
+  const currentRegion = getRegionByCode(selectedRegion);
 
   const toggleLanguage = (langId: string) => {
     setSelectedLangs(prev => 
@@ -49,6 +51,10 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
         ? prev.filter(l => l !== langId)
         : [...prev, langId]
     );
+  };
+
+  const handleSelectRegion = (code: string) => {
+    setSelectedRegion(code);
   };
 
   const handleAddArtist = (artistName?: string) => {
@@ -70,6 +76,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 
   const handleSave = () => {
     onSavePreferences({
+      region: selectedRegion,
       preferredLanguages: selectedLangs.length > 0 ? selectedLangs : ['tamil', 'hindi', 'english'],
       favoriteArtists: artists,
       onboardingCompleted: true
@@ -89,7 +96,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
             </div>
             <div>
               <h3 className="text-lg font-bold text-[var(--text-primary)] font-serif">Music Preferences</h3>
-              <p className="text-xs text-[var(--text-muted)]">Personalize your languages, trending feeds & artists</p>
+              <p className="text-xs text-[var(--text-muted)]">Personalize your region, languages, trending feeds & artists</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-[var(--surface-hover)] text-[var(--text-muted)]">
@@ -97,8 +104,42 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
           </button>
         </div>
 
-        {/* Section 1: Preferred Languages */}
+        {/* Section 1: Listening Region & Country */}
         <div className="flex flex-col gap-2.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-[var(--accent-primary)] flex items-center gap-1.5">
+            <MapPin className="w-4 h-4" />
+            Listening Region & Trending Charts
+          </label>
+          <p className="text-[11px] text-[var(--text-muted)]">
+            Select your country to tailor live trending charts, regional top 40s and search relevance:
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+            {REGIONS.map((reg) => {
+              const isSelected = selectedRegion === reg.code;
+              return (
+                <button
+                  key={reg.code}
+                  type="button"
+                  onClick={() => handleSelectRegion(reg.code)}
+                  className={`p-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-2 transition-all text-left ${
+                    isSelected
+                      ? 'bg-[var(--accent-primary)] text-[var(--canvas-bg)] border-[var(--accent-primary)] shadow-sm'
+                      : 'bg-[var(--surface-hover)] text-[var(--text-muted)] border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-base">{reg.flag}</span>
+                    <span className="truncate">{reg.name}</span>
+                  </div>
+                  {isSelected && <Check className="w-3.5 h-3.5 flex-shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Section 2: Preferred Languages */}
+        <div className="flex flex-col gap-2.5 pt-3 border-t border-[var(--border-subtle)]">
           <label className="text-xs font-bold uppercase tracking-wider text-[var(--accent-primary)] flex items-center gap-1.5">
             <Globe2 className="w-4 h-4" />
             Preferred Music Languages
@@ -128,73 +169,67 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
           </div>
         </div>
 
-        {/* Section 2: Favorite Artists with Autocomplete Suggestions */}
+        {/* Section 3: Favorite Artists with Autocomplete Suggestions */}
         <div className="flex flex-col gap-2.5 pt-3 border-t border-[var(--border-subtle)]">
           <label className="text-xs font-bold uppercase tracking-wider text-[var(--accent-primary)] flex items-center gap-1.5">
             <Heart className="w-4 h-4" />
             Favorite Artists
           </label>
           <p className="text-[11px] text-[var(--text-muted)]">
-            Type any artist name below. We display matching artists across Indian & global music in real time.
+            Type any artist name below. We display matching artists across regional & global charts in real time.
           </p>
 
-          {/* Autocomplete Search Input */}
-          <div className="relative flex flex-col gap-1">
-            <div className="flex items-center gap-2">
+          {/* Autocomplete Input */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex gap-2">
               <input
                 type="text"
                 value={newArtistInput}
                 onChange={(e) => setNewArtistInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    if (matchingSuggestions.length > 0) {
-                      handleAddArtist(matchingSuggestions[0].name);
-                    } else {
-                      handleAddArtist();
-                    }
+                    e.preventDefault();
+                    handleAddArtist();
                   }
                 }}
-                placeholder="Type artist name (e.g. Anirudh, Rahman, Arijit, Sid, Weeknd)..."
-                className="flex-1 px-3.5 py-2.5 rounded-xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] shadow-inner"
+                placeholder="Search artist name (e.g. Anirudh, Rahman, Arijit, Taylor Swift)..."
+                className="flex-1 px-3.5 py-2 rounded-xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
               />
               <button
                 type="button"
                 onClick={() => handleAddArtist()}
-                className="px-4 py-2.5 rounded-xl bg-[var(--accent-primary)] text-[var(--canvas-bg)] text-xs font-semibold flex items-center gap-1 hover:scale-105 active:scale-95 transition-all"
+                className="px-4 py-2 rounded-xl bg-[var(--accent-primary)] text-[var(--canvas-bg)] text-xs font-semibold hover:scale-105 active:scale-95 transition-all"
               >
-                <Plus className="w-3.5 h-3.5" />
                 Add
               </button>
             </div>
 
-            {/* Real-time Suggestions Dropdown */}
+            {/* Suggestions dropdown when user types */}
             {newArtistInput.trim() && (
-              <div className="p-2 rounded-2xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] shadow-xl flex flex-col gap-1.5 animate-fadeIn max-h-56 overflow-y-auto">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] px-2 pt-1">
+              <div className="p-2 rounded-2xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] shadow-xl flex flex-col gap-1 max-h-44 overflow-y-auto animate-fadeIn">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] px-1">
                   Matching Artists:
                 </span>
-                {matchingSuggestions.length > 0 ? (
-                  matchingSuggestions.map((suggestion) => {
-                    const isAlreadySelected = artists.some(a => a.toLowerCase() === suggestion.name.toLowerCase());
+                {searchMatchingArtists(newArtistInput.trim(), 8).length > 0 ? (
+                  searchMatchingArtists(newArtistInput.trim(), 8).map((item) => {
+                    const isSelected = artists.some(a => a.toLowerCase() === item.name.toLowerCase());
                     return (
                       <button
-                        key={suggestion.name}
+                        key={item.name}
                         type="button"
-                        onClick={() => handleAddArtist(suggestion.name)}
-                        className={`px-3 py-2 rounded-xl text-left text-xs flex items-center justify-between transition-all ${
-                          isAlreadySelected
+                        onClick={() => handleAddArtist(item.name)}
+                        className={`px-3 py-1.5 rounded-xl text-left text-xs flex items-center justify-between transition-all ${
+                          isSelected
                             ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] font-bold'
                             : 'hover:bg-[var(--surface-card)] text-[var(--text-primary)]'
                         }`}
                       >
                         <div className="flex flex-col">
-                          <span className="font-semibold">{suggestion.name}</span>
-                          <span className="text-[10px] text-[var(--text-muted)]">
-                            {suggestion.language} • {suggestion.genre}
-                          </span>
+                          <span className="font-semibold">{item.name}</span>
+                          <span className="text-[10px] text-[var(--text-muted)]">{item.language} • {item.genre}</span>
                         </div>
                         <span className="text-[11px] font-medium text-[var(--accent-primary)]">
-                          {isAlreadySelected ? '✓ Added' : '+ Select'}
+                          {isSelected ? '✓ Added' : '+ Add'}
                         </span>
                       </button>
                     );
@@ -203,7 +238,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleAddArtist()}
-                    className="px-3 py-2 rounded-xl text-left text-xs hover:bg-[var(--surface-card)] text-[var(--accent-primary)] font-semibold"
+                    className="px-3 py-1.5 rounded-xl text-left text-xs hover:bg-[var(--surface-card)] text-[var(--accent-primary)] font-semibold"
                   >
                     + Add custom artist "{newArtistInput.trim()}"
                   </button>
@@ -212,7 +247,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
             )}
           </div>
 
-          {/* Selected Artists Chips */}
+          {/* Selected Artist Chips */}
           {artists.length > 0 && (
             <div className="flex flex-wrap gap-1.5 pt-1">
               {artists.map((artist) => (
@@ -222,21 +257,21 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 >
                   {artist}
                   <button
-                    onClick={() => handleToggleArtist(artist)}
-                    className="hover:text-rose-500 transition-colors"
+                    onClick={() => setArtists(prev => prev.filter(a => a !== artist))}
+                    className="hover:text-rose-500 transition-colors ml-0.5"
                     title="Remove"
                   >
-                    <X className="w-3 h-3" />
+                    ×
                   </button>
                 </span>
               ))}
             </div>
           )}
 
-          {/* Trending Popular Picks Quick Toggles */}
-          <div className="pt-2">
+          {/* Quick Add Suggestions */}
+          <div className="pt-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] block mb-1.5">
-              Popular Picks (Click to Add / Remove):
+              Popular Quick Add:
             </span>
             <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
               {ARTISTS_DATABASE.filter(a => a.trending).slice(0, 16).map((item) => {
