@@ -151,6 +151,7 @@ export default function App() {
   const [selectedYearRange, setSelectedYearRange] = useState<{ min: number; max: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [trendingTracks, setTrendingTracks] = useState<Track[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Audio State & Real HTML5 Audio Element
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -382,6 +383,28 @@ export default function App() {
 
     return () => clearTimeout(timer);
   }, [searchQuery, selectedLanguage, selectedMood, selectedGenre, currentUser?.token]);
+
+  // Explicit Search Execution (invoked via Enter key or Initiate Search button)
+  const handleExecuteSearch = async (overrideQuery?: string) => {
+    setIsSearching(true);
+    try {
+      const q = overrideQuery !== undefined ? overrideQuery : searchQuery.trim();
+      const data = await searchTracks(q, selectedLanguage, selectedMood, selectedGenre, currentUser?.token);
+      if (data && Array.isArray(data.results)) {
+        setTracks(data.results);
+        if (q) {
+          showToast(`Found ${data.results.length} songs for "${q}"`);
+        } else {
+          showToast(`Found ${data.results.length} songs matching your filters`);
+        }
+      }
+    } catch (err) {
+      console.warn('[Adora Execute Search Error]', err);
+      showToast('Search encountered an issue. Reconnecting...');
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   // Live India Trending Hits (Tailored to preferred languages)
   useEffect(() => {
@@ -792,6 +815,8 @@ export default function App() {
           }}
           currentUser={currentUser}
           onOpenSettings={() => setIsSettingsOpen(true)}
+          onExecuteSearch={handleExecuteSearch}
+          isSearching={isSearching}
         />
 
         {/* 3. Main Body Content */}

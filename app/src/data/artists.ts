@@ -150,3 +150,4 @@ export function searchMatchingArtists(query: string, limit: number = 8): ArtistE
     (artist.genre && artist.genre.toLowerCase().includes(clean))
   ).slice(0, limit);
 }
+
