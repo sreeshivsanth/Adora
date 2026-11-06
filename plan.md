@@ -546,6 +546,13 @@ gantt
   - [x] Palette tokens configured in Tailwind: Botanical Olive (`#4F694C`) and Buttermilk Cream (`#FFFFE7`). (`#4F694C`) and Buttermilk Cream (`#FFFFE7`).
   - [x] Smooth theme toggle for Linen Light Mode and Midnight Moss Dark Mode implemented in `app/src/App.tsx`.
   - [x] Custom `logo.png` integrated into navigation rail, header, living room mode, and app favicon., window titlebar, and splash screens.
+  - [x] Theme 4 "Abyssal Tide & Sea-Foam Slate" aquatic color profile applied across light & dark modes.
+  - [x] Search filters expanded with Breakup, Motivation, and Sad moods.
+  - [x] Genre filter selector (Melody, Hip-Hop, Pop, Rock, Classical, EDM, R&B, Folk, Devotional).
+  - [x] Dual search modes: Mode A (Title/Artist + filters) and Mode B (Filter Discovery without typing names).
+  - [x] Real-time artist search autocomplete with 150+ popular Indian and global artist suggestions in Settings & Onboarding.
+  - [x] Real live India trending hits engine via Apple/iTunes India charts tailored to user's preferred languages.
+  - [x] Adora Pulse: In-app Trends & Most Played leaderboards with live community playback telemetry.
 - [ ] **Layout & Navigation:**
   - [x] Collapsible 64px Zen Navigation Rail built in `app/src/components/ZenNavRail.tsx`.
   - [x] Ambient Header with one-tap Language Filter Pills (`All`, `Tamil`, `Hindi`, `English`, `Korean`) built in `app/src/components/TopHeader.tsx`. (`All`, `Tamil`, `Hindi`, `English`, `Korean`).

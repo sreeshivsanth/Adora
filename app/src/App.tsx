@@ -13,9 +13,10 @@ import { AddToPlaylistModal } from './components/AddToPlaylistModal';
 import { PlaylistDetailView } from './components/PlaylistDetailView';
 import { UserSettingsModal } from './components/UserSettingsModal';
 import { OnboardingModal } from './components/OnboardingModal';
+import { AppTrendsView } from './components/AppTrendsView';
 import { Track, User, Device, BlendSession, AdminMetrics, Playlist, UserPreferences } from './types';
-import { Sparkles, Radio, CheckCircle, ShieldCheck, Flame, History, FolderPlus, Play, Plus, Music, Disc3, Clock } from 'lucide-react';
-import { searchTracks, requestIngest, fetchLocalTracks, resolveAudioUrl, fetchUserPreferences, saveUserPreferences, fetchUserPlaylists, saveUserPlaylists } from './services/api';
+import { Sparkles, Radio, CheckCircle, ShieldCheck, Flame, History, FolderPlus, Play, Plus, Music, Disc3, Clock, TrendingUp } from 'lucide-react';
+import { searchTracks, requestIngest, fetchLocalTracks, resolveAudioUrl, fetchUserPreferences, saveUserPreferences, fetchUserPlaylists, saveUserPlaylists, fetchTrendingTracks, recordTelemetryPlay } from './services/api';
 
 const INITIAL_TRACKS: Track[] = [
   {
@@ -143,11 +144,13 @@ const DEFAULT_PLAYLISTS: Playlist[] = [
 
 export default function App() {
   const [darkMode, setDarkMode] = useState(true);
-  const [currentTab, setCurrentTab] = useState<'studio' | 'vault' | 'sync' | 'admin'>('studio');
+  const [currentTab, setCurrentTab] = useState<'studio' | 'vault' | 'sync' | 'admin' | 'trends'>('studio');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
   const [selectedMood, setSelectedMood] = useState<string>('all');
+  const [selectedGenre, setSelectedGenre] = useState<string>('all');
   const [selectedYearRange, setSelectedYearRange] = useState<{ min: number; max: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [trendingTracks, setTrendingTracks] = useState<Track[]>([]);
 
   // Audio State & Real HTML5 Audio Element
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -363,17 +366,12 @@ export default function App() {
     }
   };
 
-  // Live Worldwide Music Search (250ms debounce)
+  // Live Worldwide Music Search supporting Mode A (Query + Filters) & Mode B (Filter Discovery)
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
         const queryTerm = searchQuery.trim();
-        // If mood is selected and query is active, append mood for richer search
-        const fullQuery = (selectedMood !== 'all' && queryTerm)
-          ? `${queryTerm} ${selectedMood}`
-          : queryTerm;
-
-        const data = await searchTracks(fullQuery, selectedLanguage, currentUser?.token);
+        const data = await searchTracks(queryTerm, selectedLanguage, selectedMood, selectedGenre, currentUser?.token);
         if (data && Array.isArray(data.results)) {
           setTracks(data.results);
         }
@@ -383,7 +381,23 @@ export default function App() {
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, selectedLanguage, selectedMood, currentUser?.token]);
+  }, [searchQuery, selectedLanguage, selectedMood, selectedGenre, currentUser?.token]);
+
+  // Live India Trending Hits (Tailored to preferred languages)
+  useEffect(() => {
+    let active = true;
+    fetchTrendingTracks(userPreferences.preferredLanguages, currentUser?.token)
+      .then(res => {
+        if (active && res && Array.isArray(res.results)) {
+          setTrendingTracks(res.results);
+        }
+      })
+      .catch(err => {
+        console.warn('[Adora Trending Load]', err);
+      });
+
+    return () => { active = false; };
+  }, [userPreferences.preferredLanguages, currentUser?.token]);
 
   // Initial load: Fetch local downloaded library from server
   useEffect(() => {
@@ -484,6 +498,9 @@ export default function App() {
       return [track, ...filtered].slice(0, 15);
     });
 
+    // Record play event for App Trends & Community Telemetry
+    recordTelemetryPlay(track, currentUser?.token).catch(() => {});
+
     // If online track, trigger on-demand JIT ingestion in background
     if (!track.isLocal) {
       requestIngest({ title: track.title, artist: track.artist, language: track.language }, currentUser?.token)
@@ -575,6 +592,8 @@ export default function App() {
     setActivePlaylistId(null);
     setSearchQuery('');
     setSelectedMood('all');
+    setSelectedGenre('all');
+    setSelectedLanguage('all');
     setSelectedYearRange(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -686,7 +705,15 @@ export default function App() {
         }
       }
 
-      // 4. Release Year Range filter
+      // 4. Genre filter
+      if (selectedGenre !== 'all') {
+        const songGenre = (t.genre || '').toLowerCase();
+        if (songGenre && !songGenre.includes(selectedGenre.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // 5. Release Year Range filter
       if (selectedYearRange && t.releaseYear) {
         if (t.releaseYear < selectedYearRange.min || t.releaseYear > selectedYearRange.max) {
           return false;
@@ -695,21 +722,13 @@ export default function App() {
 
       return true;
     });
-  }, [tracks, currentTab, searchQuery, selectedLanguage, selectedMood, selectedYearRange]);
+  }, [tracks, currentTab, searchQuery, selectedLanguage, selectedMood, selectedGenre, selectedYearRange]);
 
   // Active playlist resolution if user clicked a playlist
   const activePlaylist = useMemo(() => {
     if (!activePlaylistId) return null;
     return playlists.find(p => p.id === activePlaylistId) || null;
   }, [activePlaylistId, playlists]);
-
-  // Trending tracks based on user preferences and popular seed list
-  const trendingTracks = useMemo(() => {
-    return tracks.filter(t => 
-      userPreferences.preferredLanguages.includes(t.language) ||
-      userPreferences.favoriteArtists.some(a => t.artist.toLowerCase().includes(a.toLowerCase()))
-    ).slice(0, 6);
-  }, [tracks, userPreferences]);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[var(--canvas-bg)] text-[var(--text-primary)]">
@@ -755,7 +774,7 @@ export default function App() {
 
       {/* Main Sanctuary Area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        {/* 2. Top Header with Search, Mood & Year Range Filters */}
+        {/* 2. Top Header with Search, Mood, Genre & Year Range Filters */}
         <TopHeader
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -763,6 +782,8 @@ export default function App() {
           setSelectedLanguage={setSelectedLanguage}
           selectedMood={selectedMood}
           setSelectedMood={setSelectedMood}
+          selectedGenre={selectedGenre}
+          setSelectedGenre={setSelectedGenre}
           selectedYearRange={selectedYearRange}
           setSelectedYearRange={setSelectedYearRange}
           activeDevice={activeDevice}
@@ -774,7 +795,19 @@ export default function App() {
         />
 
         {/* 3. Main Body Content */}
-        <main className="flex-1 overflow-y-auto px-6 pt-2 pb-32 flex flex-col gap-8 max-w-6xl w-full mx-auto">
+        {currentTab === 'trends' ? (
+          <AppTrendsView
+            currentTrack={currentTrack}
+            isPlaying={isPlaying}
+            onPlayTrack={handleSelectTrack}
+            onPauseTrack={handleTogglePlay}
+            onAddToQueue={handleAddToQueue}
+            onAddToPlaylist={(track) => setPlaylistTrackToAdd(track)}
+            onToggleStar={handleToggleFavorite}
+            token={currentUser?.token}
+          />
+        ) : (
+          <main className="flex-1 overflow-y-auto px-6 pt-2 pb-32 flex flex-col gap-8 max-w-6xl w-full mx-auto">
           
           {/* VIEW A: Active Playlist View (When clicked from Home) */}
           {activePlaylist ? (
@@ -1035,13 +1068,15 @@ export default function App() {
                     ? "The Vault (Your Starred & Downloaded Music)" 
                     : searchQuery 
                     ? `Search Results for "${searchQuery}"`
-                    : selectedMood !== 'all'
-                    ? `${selectedMood.toUpperCase()} Curated Shelf`
+                    : (selectedMood !== 'all' || selectedGenre !== 'all')
+                    ? `Filter Discovery Mode (${filteredTracks.length} Matching Songs)`
                     : "Curated Sanctuary Shelf"
                 }
                 subtitle={
                   selectedYearRange 
                     ? `Filtering songs released between ${selectedYearRange.min} and ${selectedYearRange.max}`
+                    : (selectedMood !== 'all' || selectedGenre !== 'all')
+                    ? `Suitably matched for: ${selectedLanguage !== 'all' ? selectedLanguage.toUpperCase() : 'ALL LANGUAGES'} ${selectedMood !== 'all' ? '• ' + selectedMood.toUpperCase() + ' MOOD' : ''} ${selectedGenre !== 'all' ? '• ' + selectedGenre.toUpperCase() : ''}`
                     : selectedLanguage !== 'all' 
                     ? `Filtered by ${selectedLanguage.toUpperCase()} songs` 
                     : "Songs discovered and saved across worldwide languages"
@@ -1051,6 +1086,7 @@ export default function App() {
           )}
 
         </main>
+      )}
 
         {/* 4. Floating Acoustic Island Player (Frosted Glass Translucent) */}
         <FloatingPlayer

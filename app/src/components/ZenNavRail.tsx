@@ -1,10 +1,10 @@
 import React from 'react';
-import { Disc3, FolderHeart, Users, Shield, Sun, Moon, Home, Settings } from 'lucide-react';
+import { Disc3, FolderHeart, Users, Shield, Sun, Moon, Home, Settings, TrendingUp } from 'lucide-react';
 import { User } from '../types';
 
 interface ZenNavRailProps {
-  currentTab: 'studio' | 'vault' | 'sync' | 'admin';
-  setCurrentTab: (tab: 'studio' | 'vault' | 'sync' | 'admin') => void;
+  currentTab: 'studio' | 'vault' | 'sync' | 'admin' | 'trends';
+  setCurrentTab: (tab: 'studio' | 'vault' | 'sync' | 'admin' | 'trends') => void;
   onGoHome: () => void;
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
@@ -78,6 +78,20 @@ export const ZenNavRail: React.FC<ZenNavRailProps> = ({
         >
           <Users className="w-5 h-5" />
           <span className="text-[10px] font-medium hidden md:inline">Sync</span>
+        </button>
+
+        {/* App Trends & Most Played Charts */}
+        <button
+          onClick={() => setCurrentTab('trends')}
+          className={`p-3 rounded-2xl transition-all flex flex-col items-center gap-1 relative ${
+            currentTab === 'trends'
+              ? 'bg-[var(--accent-primary)] text-[var(--canvas-bg)] shadow-sm'
+              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
+          }`}
+          title="App Trends & Most Played Songs in Adora"
+        >
+          <TrendingUp className="w-5 h-5" />
+          <span className="text-[10px] font-medium hidden md:inline">Trends</span>
         </button>
 
         {/* Admin Studio Button (Only active when logged in as Admin) */}

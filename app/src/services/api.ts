@@ -32,13 +32,54 @@ export async function login(username: string, password?: string, otp?: string) {
   return res.json();
 }
 
-export async function searchTracks(query: string, language: string = 'all', token?: string) {
+export async function searchTracks(query: string, language: string = 'all', mood: string = 'all', genre: string = 'all', token?: string) {
   const headers: Record<string, string> = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetchWithFallback(`/api/search?q=${encodeURIComponent(query)}&language=${language}`, {
+  const params = new URLSearchParams();
+  if (query) params.append('q', query);
+  if (language && language !== 'all') params.append('language', language);
+  if (mood && mood !== 'all') params.append('mood', mood);
+  if (genre && genre !== 'all') params.append('genre', genre);
+
+  const res = await fetchWithFallback(`/api/search?${params.toString()}`, {
     headers
   });
+  return res.json();
+}
+
+export async function fetchTrendingTracks(languages: string[] = ['tamil', 'hindi', 'english'], token?: string) {
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetchWithFallback(`/api/trending?languages=${encodeURIComponent(languages.join(','))}`, {
+    headers
+  });
+  return res.json();
+}
+
+export async function recordTelemetryPlay(track: any, token?: string) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await fetchWithFallback('/api/telemetry/play', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ track })
+    });
+    return res.json();
+  } catch (err) {
+    console.warn('[Adora Telemetry Error]', err);
+    return { success: false };
+  }
+}
+
+export async function fetchTelemetryTrends(token?: string) {
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetchWithFallback('/api/telemetry/trends', { headers });
   return res.json();
 }
 

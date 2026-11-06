@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Settings, Check, Plus, Sparkles, Heart, Globe2 } from 'lucide-react';
+import { X, Settings, Check, Plus, Sparkles, Heart, Globe2, Music2 } from 'lucide-react';
 import { UserPreferences } from '../types';
+import { searchMatchingArtists, ARTISTS_DATABASE } from '../data/artists';
 
 interface UserSettingsModalProps {
   isOpen: boolean;
@@ -22,13 +23,6 @@ const ALL_LANGUAGES = [
   { id: 'japanese', label: '日本語 (Japanese)' }
 ];
 
-const POPULAR_ARTISTS = [
-  'A.R. Rahman', 'Anirudh Ravichander', 'Arijit Singh', 'Sid Sriram',
-  'Pritam', 'The Weeknd', 'Taylor Swift', 'BTS', 'NewJeans',
-  'Shreya Ghoshal', 'Diljit Dosanjh', 'Linkin Park', 'Daft Punk',
-  'AP Dhillon', 'Ed Sheeran', 'Coldplay'
-];
-
 export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   isOpen,
   onClose,
@@ -45,6 +39,10 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 
   if (!isOpen) return null;
 
+  const matchingSuggestions = newArtistInput.trim()
+    ? searchMatchingArtists(newArtistInput.trim(), 8)
+    : [];
+
   const toggleLanguage = (langId: string) => {
     setSelectedLangs(prev => 
       prev.includes(langId) 
@@ -53,11 +51,11 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
     );
   };
 
-  const handleAddArtist = () => {
-    const trimmed = newArtistInput.trim();
-    if (!trimmed) return;
-    if (!artists.some(a => a.toLowerCase() === trimmed.toLowerCase())) {
-      setArtists(prev => [...prev, trimmed]);
+  const handleAddArtist = (artistName?: string) => {
+    const target = (artistName || newArtistInput).trim();
+    if (!target) return;
+    if (!artists.some(a => a.toLowerCase() === target.toLowerCase())) {
+      setArtists(prev => [...prev, target]);
     }
     setNewArtistInput('');
   };
@@ -80,7 +78,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 select-none">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 select-none animate-fadeIn">
       <div className="w-full max-w-lg bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded-3xl p-6 shadow-2xl flex flex-col gap-5 max-h-[90vh] overflow-y-auto">
         
         {/* Header */}
@@ -130,34 +128,88 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
           </div>
         </div>
 
-        {/* Section 2: Favorite Artists */}
+        {/* Section 2: Favorite Artists with Autocomplete Suggestions */}
         <div className="flex flex-col gap-2.5 pt-3 border-t border-[var(--border-subtle)]">
           <label className="text-xs font-bold uppercase tracking-wider text-[var(--accent-primary)] flex items-center gap-1.5">
             <Heart className="w-4 h-4" />
             Favorite Artists
           </label>
           <p className="text-[11px] text-[var(--text-muted)]">
-            Choose or add artists you love for personalized autoplay and tailored recommendations.
+            Type any artist name below. We display matching artists across Indian & global music in real time.
           </p>
 
-          {/* Input to add custom artist */}
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={newArtistInput}
-              onChange={(e) => setNewArtistInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddArtist()}
-              placeholder="Type any artist name & press Enter..."
-              className="flex-1 px-3.5 py-2 rounded-xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)]"
-            />
-            <button
-              type="button"
-              onClick={handleAddArtist}
-              className="px-3 py-2 rounded-xl bg-[var(--surface-hover)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1 transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add
-            </button>
+          {/* Autocomplete Search Input */}
+          <div className="relative flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newArtistInput}
+                onChange={(e) => setNewArtistInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (matchingSuggestions.length > 0) {
+                      handleAddArtist(matchingSuggestions[0].name);
+                    } else {
+                      handleAddArtist();
+                    }
+                  }
+                }}
+                placeholder="Type artist name (e.g. Anirudh, Rahman, Arijit, Sid, Weeknd)..."
+                className="flex-1 px-3.5 py-2.5 rounded-xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] shadow-inner"
+              />
+              <button
+                type="button"
+                onClick={() => handleAddArtist()}
+                className="px-4 py-2.5 rounded-xl bg-[var(--accent-primary)] text-[var(--canvas-bg)] text-xs font-semibold flex items-center gap-1 hover:scale-105 active:scale-95 transition-all"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add
+              </button>
+            </div>
+
+            {/* Real-time Suggestions Dropdown */}
+            {newArtistInput.trim() && (
+              <div className="p-2 rounded-2xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] shadow-xl flex flex-col gap-1.5 animate-fadeIn max-h-56 overflow-y-auto">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] px-2 pt-1">
+                  Matching Artists:
+                </span>
+                {matchingSuggestions.length > 0 ? (
+                  matchingSuggestions.map((suggestion) => {
+                    const isAlreadySelected = artists.some(a => a.toLowerCase() === suggestion.name.toLowerCase());
+                    return (
+                      <button
+                        key={suggestion.name}
+                        type="button"
+                        onClick={() => handleAddArtist(suggestion.name)}
+                        className={`px-3 py-2 rounded-xl text-left text-xs flex items-center justify-between transition-all ${
+                          isAlreadySelected
+                            ? 'bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] font-bold'
+                            : 'hover:bg-[var(--surface-card)] text-[var(--text-primary)]'
+                        }`}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-semibold">{suggestion.name}</span>
+                          <span className="text-[10px] text-[var(--text-muted)]">
+                            {suggestion.language} • {suggestion.genre}
+                          </span>
+                        </div>
+                        <span className="text-[11px] font-medium text-[var(--accent-primary)]">
+                          {isAlreadySelected ? '✓ Added' : '+ Select'}
+                        </span>
+                      </button>
+                    );
+                  })
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleAddArtist()}
+                    className="px-3 py-2 rounded-xl text-left text-xs hover:bg-[var(--surface-card)] text-[var(--accent-primary)] font-semibold"
+                  >
+                    + Add custom artist "{newArtistInput.trim()}"
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Selected Artists Chips */}
@@ -181,26 +233,26 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
             </div>
           )}
 
-          {/* Quick Pick Popular Artists */}
+          {/* Trending Popular Picks Quick Toggles */}
           <div className="pt-2">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] block mb-1.5">
               Popular Picks (Click to Add / Remove):
             </span>
-            <div className="flex flex-wrap gap-1.5">
-              {POPULAR_ARTISTS.map((artist) => {
-                const isSelected = artists.includes(artist);
+            <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+              {ARTISTS_DATABASE.filter(a => a.trending).slice(0, 16).map((item) => {
+                const isSelected = artists.some(a => a.toLowerCase() === item.name.toLowerCase());
                 return (
                   <button
-                    key={artist}
+                    key={item.name}
                     type="button"
-                    onClick={() => handleToggleArtist(artist)}
+                    onClick={() => handleToggleArtist(item.name)}
                     className={`px-2.5 py-1 rounded-full text-xs transition-all border ${
                       isSelected
                         ? 'bg-[var(--accent-primary)] text-[var(--canvas-bg)] border-[var(--accent-primary)] font-medium shadow-sm'
                         : 'bg-[var(--surface-hover)] text-[var(--text-muted)] border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
                     }`}
                   >
-                    {artist}
+                    {item.name}
                   </button>
                 );
               })}
@@ -231,4 +283,3 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
     </div>
   );
 };
-

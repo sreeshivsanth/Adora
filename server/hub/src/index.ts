@@ -239,9 +239,11 @@ const CURATED_SEED: Record<string, any[]> = {
 app.get('/api/search', optionalToken, async (req: AuthenticatedRequest, res: Response) => {
   const query = (req.query.q as string || '').trim();
   const language = (req.query.language as string || 'all').toLowerCase();
+  const mood = (req.query.mood as string || 'all').toLowerCase();
+  const genre = (req.query.genre as string || 'all').toLowerCase();
 
-  // If query is blank, return curated collection based on language
-  if (!query) {
+  // If query is blank and all filters are default, return curated collection
+  if (!query && mood === 'all' && genre === 'all') {
     if (language === 'all') {
       const allSeeds = Object.values(CURATED_SEED).flat();
       res.json({ results: allSeeds, count: allSeeds.length });
@@ -253,8 +255,25 @@ app.get('/api/search', optionalToken, async (req: AuthenticatedRequest, res: Res
   }
 
   try {
-    const searchTerm = language !== 'all' ? `${query} ${language}` : query;
-    const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=40`;
+    let searchTerm: string;
+    if (query) {
+      // Mode A: Song / Artist name query + optional filters
+      const parts = [query];
+      if (genre !== 'all') parts.push(genre);
+      if (mood !== 'all') parts.push(mood);
+      if (language !== 'all') parts.push(language);
+      searchTerm = parts.join(' ');
+    } else {
+      // Mode B: Filter Discovery Mode (No song/artist name entered)
+      const parts: string[] = [];
+      if (language !== 'all') parts.push(language);
+      else parts.push('india');
+      if (mood !== 'all') parts.push(`${mood} songs`);
+      if (genre !== 'all') parts.push(genre);
+      searchTerm = parts.join(' ');
+    }
+
+    const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&country=IN&entity=song&limit=45`;
     const response = await fetch(itunesUrl);
 
     if (!response.ok) {
@@ -279,21 +298,50 @@ app.get('/api/search', optionalToken, async (req: AuthenticatedRequest, res: Res
         : `/api/stream/full?title=${encodeURIComponent(r.trackName)}&artist=${encodeURIComponent(r.artistName)}&id=${r.trackId}&fallback=${encodeURIComponent(r.previewUrl || '')}`;
 
       const releaseYear = r.releaseDate ? new Date(r.releaseDate).getFullYear() : undefined;
-      const genre = r.primaryGenreName || 'Music';
+      let trackGenre = r.primaryGenreName || 'Music';
 
-      // Infer mood dynamically from genre and title
+      // Enhanced mood dynamic inference
       const lowerTitle = (r.trackName || '').toLowerCase();
+      const lowerGenre = (r.primaryGenreName || '').toLowerCase();
       let inferredMood = 'chill';
-      if (/dance|party|club|rock|electronic|hip-hop/i.test(genre) || /remix|beat|party|dhol|bhangra/i.test(lowerTitle)) {
+
+      if (/breakup|heartbreak|dhokha|pirivu|broken|separation|cheat/i.test(lowerTitle)) {
+        inferredMood = 'breakup';
+      } else if (/sad|alone|crying|pain|dard|kannir|dukha|tear|lonely|hurt|judaai|miss/i.test(lowerTitle)) {
+        inferredMood = 'sad';
+      } else if (/motivation|gym|workout|energy|power|victory|aarambam|aarambh|believer|beast|roar|unbreakable|rise|fight|hustle/i.test(lowerTitle)) {
+        inferredMood = 'motivation';
+      } else if (/dance|party|club|remix|beat|dhol|bhangra|thara local|kuthu/i.test(lowerTitle) || /dance|party/i.test(lowerGenre)) {
         inferredMood = 'energetic';
-      } else if (/love|heart|soul|romantic|unplugged|acoustic/i.test(lowerTitle) || /romance|r&b/i.test(genre)) {
+      } else if (/love|heart|soul|romantic|unplugged|kadhal|pyaar|ishq|prem/i.test(lowerTitle) || /romance/i.test(lowerGenre)) {
         inferredMood = 'romantic';
-      } else if (/sad|alone|breakup|cry|tear/i.test(lowerTitle)) {
-        inferredMood = 'melancholic';
-      } else if (/devotional|bhajan|aarti|spiritual|gospel/i.test(lowerTitle) || /devotional/i.test(genre)) {
+      } else if (/devotional|bhajan|aarti|spiritual|gospel|shiva|krishna|hanuman/i.test(lowerTitle) || /devotional/i.test(lowerGenre)) {
         inferredMood = 'devotional';
-      } else if (/ambient|sleep|study|lo-fi|piano|relax/i.test(lowerTitle) || /classical|ambient/i.test(genre)) {
+      } else if (/ambient|sleep|study|lo-fi|piano|relax|calm/i.test(lowerTitle) || /ambient/i.test(lowerGenre)) {
         inferredMood = 'focus';
+      } else if (mood !== 'all') {
+        inferredMood = mood;
+      }
+
+      // Enhanced genre dynamic inference
+      if (genre !== 'all') {
+        trackGenre = genre.charAt(0).toUpperCase() + genre.slice(1);
+      } else if (/melody|acoustic|unplugged|soft|slow/i.test(lowerTitle) || /melody/i.test(lowerGenre)) {
+        trackGenre = 'Melody';
+      } else if (/hip-hop|hip hop|rap|trap|drill/i.test(lowerGenre) || /rap|beat/i.test(lowerTitle)) {
+        trackGenre = 'Hip-Hop';
+      } else if (/pop/i.test(lowerGenre)) {
+        trackGenre = 'Pop';
+      } else if (/rock|metal/i.test(lowerGenre)) {
+        trackGenre = 'Rock';
+      } else if (/classical|carnatic|hindustani|instrumental/i.test(lowerGenre)) {
+        trackGenre = 'Classical';
+      } else if (/electronic|dance|edm|house/i.test(lowerGenre)) {
+        trackGenre = 'EDM';
+      } else if (/r&b|soul/i.test(lowerGenre)) {
+        trackGenre = 'R&B';
+      } else if (/folk/i.test(lowerGenre)) {
+        trackGenre = 'Folk';
       }
 
       return {
@@ -310,7 +358,7 @@ app.get('/api/search', optionalToken, async (req: AuthenticatedRequest, res: Res
         isStarred: false,
         releaseYear: releaseYear,
         mood: inferredMood,
-        genre: genre
+        genre: trackGenre
       };
     });
 
@@ -319,10 +367,151 @@ app.get('/api/search', optionalToken, async (req: AuthenticatedRequest, res: Res
     console.error('[Adora Search Error]', err);
     const allSeeds = Object.values(CURATED_SEED).flat();
     const fallback = allSeeds.filter(t => 
+      !query ||
       t.title.toLowerCase().includes(query.toLowerCase()) || 
       t.artist.toLowerCase().includes(query.toLowerCase())
     );
     res.json({ results: fallback, count: fallback.length, error: err.message });
+  }
+});
+
+// -------------------------------------------------------------
+// Real India Live Trending Songs (iTunes India Store & Regional Charts)
+// -------------------------------------------------------------
+interface TrendingCacheEntry {
+  results: any[];
+  expiresAt: number;
+}
+const trendingCache = new Map<string, TrendingCacheEntry>();
+
+app.get('/api/trending', optionalToken, async (req: AuthenticatedRequest, res: Response) => {
+  const languagesQuery = (req.query.languages as string || req.query.language as string || 'tamil,hindi,english').toLowerCase();
+  const languages = languagesQuery.split(',').map(s => s.trim()).filter(Boolean);
+  const cacheKey = languages.sort().join(',');
+  const now = Date.now();
+
+  const cached = trendingCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    res.json({ results: cached.results, count: cached.results.length, cached: true });
+    return;
+  }
+
+  try {
+    const collectedTracks: any[] = [];
+    const seenTitles = new Set<string>();
+
+    // 1. Fetch Official iTunes India Top Songs Chart (Top 35 nationwide in India)
+    try {
+      const topRssUrl = 'https://itunes.apple.com/in/rss/topsongs/limit=35/json';
+      const rssResp = await fetch(topRssUrl, { headers: { 'User-Agent': 'Adora-Sanctuary/1.0' } });
+      if (rssResp.ok) {
+        const rssData: any = await rssResp.json();
+        const entries = rssData.feed?.entry || [];
+        for (const entry of entries) {
+          const trackId = entry.id?.attributes?.['im:id'];
+          const title = entry['im:name']?.label || entry.title?.label;
+          const artist = entry['im:artist']?.label || 'Unknown Artist';
+          const album = entry['im:collection']?.['im:name']?.label || 'Trending Single';
+          const images = entry['im:image'] || [];
+          const coverUrl = images[images.length - 1]?.label || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600';
+          const genre = entry.category?.attributes?.label || 'Trending';
+          
+          const uniqueKey = `${title.toLowerCase()}:::${artist.toLowerCase()}`;
+          if (!trackId || seenTitles.has(uniqueKey)) continue;
+          seenTitles.add(uniqueKey);
+
+          const fullAudioUrl = `/api/stream/full?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}&id=${trackId}`;
+          
+          let inferredMood = 'chill';
+          const lowerTitle = title.toLowerCase();
+          if (/breakup|heartbreak|broken/i.test(lowerTitle)) inferredMood = 'breakup';
+          else if (/sad|pain|dard|crying|tear/i.test(lowerTitle)) inferredMood = 'sad';
+          else if (/motivation|power|energy|beast|roar/i.test(lowerTitle)) inferredMood = 'motivation';
+          else if (/dance|party|club|remix|beat/i.test(lowerTitle)) inferredMood = 'energetic';
+          else if (/love|heart|romantic|ishq|pyaar/i.test(lowerTitle)) inferredMood = 'romantic';
+
+          collectedTracks.push({
+            id: `trending_${trackId}`,
+            title,
+            artist,
+            album,
+            language: 'all',
+            durationSec: 215,
+            cover: coverUrl,
+            audioUrl: fullAudioUrl,
+            isLocal: false,
+            isDownloaded: false,
+            isStarred: false,
+            releaseYear: 2026,
+            mood: inferredMood,
+            genre: genre
+          });
+        }
+      }
+    } catch (rssErr) {
+      console.warn('[Adora Trending RSS Error]', rssErr);
+    }
+
+    // 2. Query Regional India Trending Hits for each preferred language (up to 3 languages)
+    for (const lang of languages.slice(0, 3)) {
+      try {
+        const langQuery = `trending ${lang} hits india`;
+        const langUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(langQuery)}&country=IN&entity=song&limit=15`;
+        const langResp = await fetch(langUrl, { headers: { 'User-Agent': 'Adora-Sanctuary/1.0' } });
+        if (langResp.ok) {
+          const langData: any = await langResp.json();
+          for (const r of (langData.results || [])) {
+            const uniqueKey = `${(r.trackName || '').toLowerCase()}:::${(r.artistName || '').toLowerCase()}`;
+            if (seenTitles.has(uniqueKey)) continue;
+            seenTitles.add(uniqueKey);
+
+            const coverUrl = r.artworkUrl100
+              ? r.artworkUrl100.replace('100x100bb', '600x600bb')
+              : 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600';
+
+            const fullAudioUrl = `/api/stream/full?title=${encodeURIComponent(r.trackName)}&artist=${encodeURIComponent(r.artistName)}&id=${r.trackId}&fallback=${encodeURIComponent(r.previewUrl || '')}`;
+            
+            let inferredMood = 'chill';
+            const lowerTitle = (r.trackName || '').toLowerCase();
+            if (/breakup|heartbreak|pirivu|broken/i.test(lowerTitle)) inferredMood = 'breakup';
+            else if (/sad|pain|dard|crying|tear|kannir/i.test(lowerTitle)) inferredMood = 'sad';
+            else if (/motivation|power|energy|beast|roar|aarambam/i.test(lowerTitle)) inferredMood = 'motivation';
+            else if (/dance|party|club|remix|kuthu|beat/i.test(lowerTitle)) inferredMood = 'energetic';
+            else if (/love|heart|romantic|kadhal|pyaar/i.test(lowerTitle)) inferredMood = 'romantic';
+
+            collectedTracks.push({
+              id: `trending_${r.trackId}`,
+              title: r.trackName,
+              artist: r.artistName,
+              album: r.collectionName || 'Single',
+              language: lang,
+              durationSec: Math.round((r.trackTimeMillis || 0) / 1000) || 210,
+              cover: coverUrl,
+              audioUrl: fullAudioUrl,
+              isLocal: false,
+              isDownloaded: false,
+              isStarred: false,
+              releaseYear: r.releaseDate ? new Date(r.releaseDate).getFullYear() : 2026,
+              mood: inferredMood,
+              genre: r.primaryGenreName || 'Indian'
+            });
+          }
+        }
+      } catch (langErr) {
+        console.warn(`[Adora Trending Lang ${lang} Error]`, langErr);
+      }
+    }
+
+    // Cache results for 20 minutes
+    trendingCache.set(cacheKey, {
+      results: collectedTracks,
+      expiresAt: now + 20 * 60 * 1000
+    });
+
+    res.json({ results: collectedTracks, count: collectedTracks.length });
+  } catch (err: any) {
+    console.error('[Adora Trending Error]', err);
+    res.status(500).json({ error: 'Failed to fetch trending songs', details: err.message });
   }
 });
 
@@ -763,6 +952,166 @@ app.post('/api/user/playlists', optionalToken, (req: AuthenticatedRequest, res: 
   } catch (e) {}
 
   res.json({ success: true, playlists: allPlaylists[userId] });
+});
+
+// -------------------------------------------------------------
+// App Play Telemetry & Listening Trends Persistence
+// -------------------------------------------------------------
+const TELEMETRY_FILE = path.join(DATA_DIR, 'telemetry_plays.json');
+
+interface PlayRecord {
+  trackId: string;
+  title: string;
+  artist: string;
+  album?: string;
+  cover?: string;
+  audioUrl?: string;
+  language?: string;
+  mood?: string;
+  genre?: string;
+  durationSec?: number;
+  playCount: number;
+  lastPlayedAt: number;
+}
+
+interface TelemetryStore {
+  tracks: Record<string, PlayRecord>;
+  recentPlays: Array<{ trackId: string; title: string; artist: string; timestamp: number; cover?: string }>;
+  totalPlays: number;
+}
+
+function loadTelemetry(): TelemetryStore {
+  try {
+    if (fs.existsSync(TELEMETRY_FILE)) {
+      return JSON.parse(fs.readFileSync(TELEMETRY_FILE, 'utf-8'));
+    }
+  } catch (err) {
+    console.warn('[Adora Telemetry Load Error]', err);
+  }
+
+  // Pre-seed with realistic, initial community telemetry for top sanctuary songs
+  return {
+    tracks: {
+      'seed_1': { trackId: 'seed_1', title: 'Enjoy Enjaami', artist: 'Dhee, Arivu & Santhosh Narayanan', album: 'Enjoy Enjaami', cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', language: 'tamil', mood: 'energetic', genre: 'Melody', playCount: 428, lastPlayedAt: Date.now() - 360000 },
+      'seed_2': { trackId: 'seed_2', title: 'Vaathi Coming', artist: 'Anirudh Ravichander & Gana Balachandar', album: 'Master', cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', language: 'tamil', mood: 'energetic', genre: 'Kuthu', playCount: 382, lastPlayedAt: Date.now() - 720000 },
+      'seed_3': { trackId: 'seed_3', title: 'Kesariya', artist: 'Arijit Singh, Pritam & Amitabh Bhattacharya', album: 'Brahmastra', cover: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=600', language: 'hindi', mood: 'romantic', genre: 'Melody', playCount: 356, lastPlayedAt: Date.now() - 1440000 },
+      'seed_4': { trackId: 'seed_4', title: 'Arabic Kuthu', artist: 'Anirudh Ravichander & Jonita Gandhi', album: 'Beast', cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', language: 'tamil', mood: 'party', genre: 'Pop', playCount: 310, lastPlayedAt: Date.now() - 2800000 },
+      'seed_5': { trackId: 'seed_5', title: 'Brown Munde', artist: 'AP Dhillon, Gurinder Gill & Shinda Kahlon', album: 'Brown Munde', cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600', language: 'punjabi', mood: 'party', genre: 'Hip-Hop', playCount: 294, lastPlayedAt: Date.now() - 3600000 },
+      'seed_6': { trackId: 'seed_6', title: 'Starboy', artist: 'The Weeknd & Daft Punk', album: 'Starboy', cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600', language: 'english', mood: 'energetic', genre: 'R&B', playCount: 275, lastPlayedAt: Date.now() - 5400000 },
+      'seed_7': { trackId: 'seed_7', title: 'Believer', artist: 'Imagine Dragons', album: 'Evolve', cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600', language: 'english', mood: 'motivation', genre: 'Rock', playCount: 258, lastPlayedAt: Date.now() - 7200000 }
+    },
+    recentPlays: [
+      { trackId: 'seed_1', title: 'Enjoy Enjaami', artist: 'Dhee & Arivu', timestamp: Date.now() - 360000, cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600' },
+      { trackId: 'seed_2', title: 'Vaathi Coming', artist: 'Anirudh Ravichander', timestamp: Date.now() - 720000, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600' },
+      { trackId: 'seed_3', title: 'Kesariya', artist: 'Arijit Singh', timestamp: Date.now() - 1440000, cover: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=600' }
+    ],
+    totalPlays: 2303
+  };
+}
+
+function saveTelemetry(store: TelemetryStore) {
+  try {
+    fs.writeFileSync(TELEMETRY_FILE, JSON.stringify(store, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[Adora Telemetry Save Error]', err);
+  }
+}
+
+app.post('/api/telemetry/play', optionalToken, (req: AuthenticatedRequest, res: Response) => {
+  const { track } = req.body;
+  if (!track || !track.title) {
+    res.status(400).json({ error: 'Missing track data' });
+    return;
+  }
+
+  const store = loadTelemetry();
+  const trackKey = track.id || `${track.title}:::${track.artist}`;
+  
+  if (!store.tracks[trackKey]) {
+    store.tracks[trackKey] = {
+      trackId: track.id || trackKey,
+      title: track.title,
+      artist: track.artist || 'Unknown Artist',
+      album: track.album,
+      cover: track.cover,
+      audioUrl: track.audioUrl,
+      language: track.language,
+      mood: track.mood || 'chill',
+      genre: track.genre || 'Music',
+      durationSec: track.durationSec,
+      playCount: 1,
+      lastPlayedAt: Date.now()
+    };
+  } else {
+    store.tracks[trackKey].playCount += 1;
+    store.tracks[trackKey].lastPlayedAt = Date.now();
+    if (track.cover && !store.tracks[trackKey].cover) store.tracks[trackKey].cover = track.cover;
+    if (track.audioUrl) store.tracks[trackKey].audioUrl = track.audioUrl;
+  }
+
+  store.totalPlays = (store.totalPlays || 0) + 1;
+  store.recentPlays.unshift({
+    trackId: track.id || trackKey,
+    title: track.title,
+    artist: track.artist || 'Unknown',
+    timestamp: Date.now(),
+    cover: track.cover
+  });
+  if (store.recentPlays.length > 40) {
+    store.recentPlays.pop();
+  }
+
+  saveTelemetry(store);
+  res.json({ success: true, playCount: store.tracks[trackKey].playCount, totalPlays: store.totalPlays });
+});
+
+app.get('/api/telemetry/trends', optionalToken, (_req: AuthenticatedRequest, res: Response) => {
+  const store = loadTelemetry();
+  const trackList = Object.values(store.tracks);
+  
+  // Sort tracks by play count descending
+  const topPlayed = [...trackList].sort((a, b) => b.playCount - a.playCount).slice(0, 30);
+
+  // Calculate artist, mood, and genre distribution
+  const artistMap: Record<string, number> = {};
+  const moodMap: Record<string, number> = {};
+  const genreMap: Record<string, number> = {};
+
+  for (const t of trackList) {
+    const artist = t.artist || 'Unknown';
+    artistMap[artist] = (artistMap[artist] || 0) + t.playCount;
+
+    const mood = (t.mood || 'chill').toLowerCase();
+    moodMap[mood] = (moodMap[mood] || 0) + t.playCount;
+
+    const genre = (t.genre || 'Music').trim();
+    genreMap[genre] = (genreMap[genre] || 0) + t.playCount;
+  }
+
+  const total = store.totalPlays || 1;
+
+  const topArtists = Object.entries(artistMap)
+    .map(([artist, count]) => ({ artist, count, percent: Math.round((count / total) * 100) }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  const topMoods = Object.entries(moodMap)
+    .map(([mood, count]) => ({ mood, count, percent: Math.round((count / total) * 100) }))
+    .sort((a, b) => b.count - a.count);
+
+  const topGenres = Object.entries(genreMap)
+    .map(([genre, count]) => ({ genre, count, percent: Math.round((count / total) * 100) }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  res.json({
+    totalAppPlays: store.totalPlays,
+    topPlayed,
+    topArtists,
+    topMoods,
+    topGenres,
+    recentActivity: store.recentPlays.slice(0, 15)
+  });
 });
 
 // -------------------------------------------------------------
