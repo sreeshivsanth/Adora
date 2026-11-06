@@ -2,27 +2,27 @@
 
 @layer base {
   :root {
-    --canvas-bg: #F8F5EE;
-    --surface-card: #EFECE3;
-    --surface-hover: #E5E0D4;
-    --accent-primary: #4F694C;
-    --accent-secondary: #63725E;
-    --text-primary: #22241F;
-    --text-muted: #6B7065;
-    --border-subtle: rgba(79, 105, 76, 0.12);
-    --player-glass: rgba(239, 236, 227, 0.62);
+    --canvas-bg: #D1DCDE;
+    --surface-card: #BECED2;
+    --surface-hover: #B2C3C8;
+    --accent-primary: #235855;
+    --accent-secondary: #426370;
+    --text-primary: #142226;
+    --text-muted: #4D646B;
+    --border-subtle: rgba(35, 88, 85, 0.16);
+    --player-glass: rgba(190, 206, 210, 0.68);
   }
 
   .dark {
-    --canvas-bg: #121612;
-    --surface-card: #1B221A;
-    --surface-hover: #232C22;
-    --accent-primary: #7C9372;
-    --accent-secondary: #FFFFE7;
-    --text-primary: #FFFFE7;
-    --text-muted: #9DA496;
-    --border-subtle: rgba(255, 255, 231, 0.08);
-    --player-glass: rgba(18, 22, 18, 0.58);
+    --canvas-bg: #0E1619;
+    --surface-card: #172327;
+    --surface-hover: #1E2D32;
+    --accent-primary: #5EA8A1;
+    --accent-secondary: #8FAAB7;
+    --text-primary: #E1EBED;
+    --text-muted: #778F96;
+    --border-subtle: rgba(94, 168, 161, 0.16);
+    --player-glass: rgba(14, 22, 25, 0.65);
   }
 
   body {

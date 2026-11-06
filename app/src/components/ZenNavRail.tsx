@@ -112,7 +112,7 @@ export const ZenNavRail: React.FC<ZenNavRailProps> = ({
         <button
           onClick={() => setDarkMode(!darkMode)}
           className="p-2.5 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-all"
-          title={darkMode ? "Switch to Linen Light Mode" : "Switch to Midnight Moss Dark Mode"}
+          title={darkMode ? "Switch to Sea-Foam Slate Light Mode" : "Switch to Abyssal Tide Dark Mode"}
         >
           {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
