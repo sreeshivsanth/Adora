@@ -107,6 +107,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   };
 
   const handleInitiateSearch = () => {
+    setShowFilters(false);
     if (searchMode === 'filter') {
       setSearchQuery('');
       onExecuteSearch?.('');

@@ -27,7 +27,7 @@ const INITIAL_TRACKS: Track[] = [
     album: 'Master',
     language: 'tamil',
     durationSec: 230,
-    cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/a3/f2/dc/a3f2dc29-fc54-07bb-8f9c-2a3936d21a5d/886448363347.jpg/600x600bb.jpg',
     audioUrl: '/api/stream/full?title=Vaathi+Coming&artist=Anirudh+Ravichander',
     isLocal: false,
     releaseYear: 2021,
@@ -42,7 +42,7 @@ const INITIAL_TRACKS: Track[] = [
     album: 'Enjoy Enjaami - Single',
     language: 'tamil',
     durationSec: 302,
-    cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/cf/c5/9b/cfc59b20-dda2-e4a3-54db-e23ac7a55b80/cover.jpg/600x600bb.jpg',
     audioUrl: '/api/stream/full?title=Enjoy+Enjaami&artist=Dhee+Arivu',
     isLocal: false,
     releaseYear: 2021,
@@ -56,7 +56,7 @@ const INITIAL_TRACKS: Track[] = [
     album: 'Bachelor',
     language: 'tamil',
     durationSec: 254,
-    cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/d3/00/1b/d3001b7a-f99b-eb10-3535-999a8610a2dd/cover.jpg/600x600bb.jpg',
     audioUrl: '/api/stream/full?title=Adiye&artist=Dhibu+Ninan+Thomas',
     isLocal: false,
     releaseYear: 2021,
@@ -70,7 +70,7 @@ const INITIAL_TRACKS: Track[] = [
     album: 'Brahmastra',
     language: 'hindi',
     durationSec: 268,
-    cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/9f/13/ca/9f13ca3b-e533-03e0-f19a-f0aaa774581d/196589311191.jpg/600x600bb.jpg',
     audioUrl: '/api/stream/full?title=Kesariya&artist=Arijit+Singh',
     isLocal: false,
     releaseYear: 2022,
@@ -85,7 +85,7 @@ const INITIAL_TRACKS: Track[] = [
     album: "Hurry Up, We're Dreaming",
     language: 'english',
     durationSec: 243,
-    cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/5b/f3/4b/5bf34b53-c1f5-bf0e-1492-59c4e2dae012/cover.jpg/600x600bb.jpg',
     audioUrl: '/api/stream/full?title=Midnight+City&artist=M83',
     isLocal: false,
     releaseYear: 2011,
@@ -94,15 +94,15 @@ const INITIAL_TRACKS: Track[] = [
   },
   {
     id: 'itunes_1440833249',
-    title: 'Blinding Lights',
-    artist: 'The Weeknd',
-    album: 'After Hours',
+    title: 'Starboy',
+    artist: 'The Weeknd feat. Daft Punk',
+    album: 'Starboy',
     language: 'english',
-    durationSec: 200,
-    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600',
-    audioUrl: '/api/stream/full?title=Blinding+Lights&artist=The+Weeknd',
+    durationSec: 230,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/b5/92/bb/b592bb72-52e3-e756-9b26-9f56d08f47ab/16UMGIM67864.rgb.jpg/600x600bb.jpg',
+    audioUrl: '/api/stream/full?title=Starboy&artist=The+Weeknd',
     isLocal: false,
-    releaseYear: 2019,
+    releaseYear: 2016,
     mood: 'energetic',
     genre: 'Pop'
   },
@@ -113,7 +113,7 @@ const INITIAL_TRACKS: Track[] = [
     album: "NewJeans 'OMG'",
     language: 'korean',
     durationSec: 185,
-    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600',
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/f6/29/42/f629426e-92fe-535c-cbe4-76e70850819b/196922287107_Cover.jpg/600x600bb.jpg',
     audioUrl: '/api/stream/full?title=Ditto&artist=NewJeans',
     isLocal: false,
     releaseYear: 2022,
@@ -127,7 +127,7 @@ const DEFAULT_PLAYLISTS: Playlist[] = [
     id: 'pl_favorites',
     name: 'Sanctuary Favorites',
     description: 'Hand-picked songs immune from LRU cloud pruning',
-    coverUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600',
+    coverUrl: 'https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/a3/f2/dc/a3f2dc29-fc54-07bb-8f9c-2a3936d21a5d/886448363347.jpg/600x600bb.jpg',
     trackIds: ['itunes_1502476579', 'itunes_1634938221'],
     createdAt: Date.now() - 86400000 * 2,
     updatedAt: Date.now()
@@ -136,7 +136,7 @@ const DEFAULT_PLAYLISTS: Playlist[] = [
     id: 'pl_chill',
     name: 'Late Night Flow',
     description: 'Acoustic & lo-fi calm for study and relaxation',
-    coverUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600',
+    coverUrl: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/cf/c5/9b/cfc59b20-dda2-e4a3-54db-e23ac7a55b80/cover.jpg/600x600bb.jpg',
     trackIds: ['itunes_1556858076', 'itunes_1440857781', 'itunes_1660603593'],
     createdAt: Date.now() - 86400000 * 5,
     updatedAt: Date.now()
@@ -197,14 +197,16 @@ export default function App() {
       const saved = localStorage.getItem('adora_user_prefs');
       return saved ? JSON.parse(saved) : {
         region: 'IN',
-        preferredLanguages: ['tamil', 'hindi', 'english'],
+        state: 'Tamil Nadu',
+        preferredLanguages: ['tamil', 'english'],
         favoriteArtists: ['A.R. Rahman', 'Anirudh Ravichander', 'Arijit Singh'],
         onboardingCompleted: false
       };
     } catch {
       return {
         region: 'IN',
-        preferredLanguages: ['tamil', 'hindi', 'english'],
+        state: 'Tamil Nadu',
+        preferredLanguages: ['tamil', 'english'],
         favoriteArtists: ['A.R. Rahman', 'Anirudh Ravichander', 'Arijit Singh'],
         onboardingCompleted: false
       };
@@ -421,7 +423,7 @@ export default function App() {
   // Live Regional Trending Hits (Tailored to user region & preferred languages)
   useEffect(() => {
     let active = true;
-    fetchTrendingTracks(userPreferences.preferredLanguages, userPreferences.region || 'IN', currentUser?.token)
+    fetchTrendingTracks(userPreferences.preferredLanguages, userPreferences.region || 'IN', userPreferences.state, currentUser?.token)
       .then(res => {
         if (active && res && Array.isArray(res.results)) {
           setTrendingTracks(res.results);
@@ -432,7 +434,7 @@ export default function App() {
       });
 
     return () => { active = false; };
-  }, [userPreferences.preferredLanguages, userPreferences.region, currentUser?.token]);
+  }, [userPreferences.preferredLanguages, userPreferences.region, userPreferences.state, currentUser?.token]);
 
   // Initial load: Fetch local downloaded library from server
   useEffect(() => {
@@ -953,75 +955,6 @@ export default function App() {
             <>
               {/* VIEW C: Normal Home Discovery Feed */}
 
-              {/* Hero Banner: Current Track Showcase */}
-              {currentTrack && (
-                <div className="relative rounded-3xl overflow-hidden p-6 md:p-8 bg-[var(--surface-card)] border border-[var(--border-subtle)] flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
-                  <div className="flex items-center gap-6">
-                    <div 
-                      className="w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden shadow-lg flex-shrink-0 cursor-pointer group"
-                      onClick={() => setIsLivingRoomOpen(true)}
-                      title="Open Living Room Mode"
-                    >
-                      <img src={currentTrack.cover} alt={currentTrack.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold uppercase tracking-widest text-[var(--accent-primary)]">
-                          {currentTrack.language} • {currentTrack.isLocal ? 'High-Res Audio' : 'Instant Online Discovery'}
-                          {currentTrack.releaseYear && ` • ${currentTrack.releaseYear}`}
-                        </span>
-                        {syncSession && (
-                          <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold">
-                            <Radio className="w-3 h-3 animate-pulse" />
-                            Sync Room {syncSession.roomId}
-                          </span>
-                        )}
-                      </div>
-                      <h1 className="text-2xl md:text-3xl font-serif font-bold text-[var(--text-primary)]">
-                        {currentTrack.title}
-                      </h1>
-                      <p className="text-sm text-[var(--text-muted)] font-medium">
-                        {currentTrack.artist} — {currentTrack.album}
-                      </p>
-
-                      <div className="flex items-center gap-3 mt-3">
-                        <button
-                          onClick={handleTogglePlay}
-                          className="px-5 py-2 rounded-full bg-[var(--accent-primary)] text-[var(--canvas-bg)] text-xs font-semibold shadow-md hover:scale-105 transition-transform flex items-center gap-1.5"
-                        >
-                          <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                          {isPlaying ? 'Pause' : 'Play Now'}
-                        </button>
-                        <button
-                          onClick={() => handleAddToQueue(currentTrack)}
-                          className="px-4 py-2 rounded-full bg-[var(--surface-hover)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--border-subtle)] transition-colors"
-                        >
-                          Add to Queue
-                        </button>
-                        <button
-                          onClick={() => setIsLivingRoomOpen(true)}
-                          className="px-4 py-2 rounded-full bg-[var(--surface-hover)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--border-subtle)] transition-colors flex items-center gap-1.5"
-                        >
-                          <Sparkles className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
-                          Living Room
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status Badge */}
-                  <div className="hidden lg:flex flex-col items-end text-right gap-1 text-xs text-[var(--text-muted)]">
-                    <span className="flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400">
-                      <ShieldCheck className="w-4 h-4" />
-                      Pruning Protection Active
-                    </span>
-                    <span>Cloudflare Edge • Secure Vault</span>
-                    <span>Zero Ads • 100% Free Full Audio</span>
-                  </div>
-                </div>
-              )}
-
               {/* HOME SECTION 1: User Playlists Showcase (Cards with details) */}
               {!searchQuery && currentTab === 'studio' && (
                 <div className="flex flex-col gap-3">
@@ -1144,7 +1077,7 @@ export default function App() {
                     <div className="flex items-center gap-2">
                       <Flame className="w-4 h-4 text-amber-500" />
                       <h3 className="text-base font-bold font-serif text-[var(--text-primary)]">
-                        Trending in {currentRegion.name} {currentRegion.flag}
+                        Trending in {userPreferences.state ? `${userPreferences.state}, ` : ''}{currentRegion.name} {currentRegion.flag}
                       </h3>
                     </div>
                     <span className="text-[11px] text-[var(--text-muted)]">

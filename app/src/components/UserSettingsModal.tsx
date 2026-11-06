@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Settings, Check, Plus, Sparkles, Heart, Globe2, MapPin } from 'lucide-react';
 import { UserPreferences } from '../types';
-import { REGIONS, RegionOption, getRegionByCode } from '../data/regions';
+import { REGIONS, RegionOption, getRegionByCode, getStatesForRegion } from '../data/regions';
 import { searchMatchingArtists, ARTISTS_DATABASE } from '../data/artists';
 
 interface UserSettingsModalProps {
@@ -33,6 +33,9 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const [selectedRegion, setSelectedRegion] = useState<string>(
     preferences?.region || 'IN'
   );
+  const [selectedState, setSelectedState] = useState<string>(
+    preferences?.state || 'Tamil Nadu'
+  );
   const [selectedLangs, setSelectedLangs] = useState<string[]>(
     preferences?.preferredLanguages || ['tamil', 'hindi', 'english']
   );
@@ -44,6 +47,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   if (!isOpen) return null;
 
   const currentRegion = getRegionByCode(selectedRegion);
+  const availableStates = getStatesForRegion(selectedRegion);
 
   const toggleLanguage = (langId: string) => {
     setSelectedLangs(prev => 
@@ -55,6 +59,12 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 
   const handleSelectRegion = (code: string) => {
     setSelectedRegion(code);
+    const states = getStatesForRegion(code);
+    if (states.length > 0) {
+      setSelectedState(states[0].name);
+    } else {
+      setSelectedState('');
+    }
   };
 
   const handleAddArtist = (artistName?: string) => {
@@ -77,6 +87,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   const handleSave = () => {
     onSavePreferences({
       region: selectedRegion,
+      state: selectedState,
       preferredLanguages: selectedLangs.length > 0 ? selectedLangs : ['tamil', 'hindi', 'english'],
       favoriteArtists: artists,
       onboardingCompleted: true
@@ -96,7 +107,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
             </div>
             <div>
               <h3 className="text-lg font-bold text-[var(--text-primary)] font-serif">Music Preferences</h3>
-              <p className="text-xs text-[var(--text-muted)]">Personalize your region, languages, trending feeds & artists</p>
+              <p className="text-xs text-[var(--text-muted)]">Personalize your country, state, languages & artists</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-[var(--surface-hover)] text-[var(--text-muted)]">
@@ -104,16 +115,20 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
           </button>
         </div>
 
-        {/* Section 1: Listening Region & Country */}
-        <div className="flex flex-col gap-2.5">
-          <label className="text-xs font-bold uppercase tracking-wider text-[var(--accent-primary)] flex items-center gap-1.5">
-            <MapPin className="w-4 h-4" />
-            Listening Region & Trending Charts
-          </label>
-          <p className="text-[11px] text-[var(--text-muted)]">
-            Select your country to tailor live trending charts, regional top 40s and search relevance:
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+        {/* Section 1: Listening Region & State */}
+        <div className="flex flex-col gap-3">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-[var(--accent-primary)] flex items-center gap-1.5">
+              <MapPin className="w-4 h-4" />
+              Country & Regional Trends
+            </label>
+            <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
+              Select your country to power your live charts and regional discovery:
+            </p>
+          </div>
+
+          {/* Region Buttons */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {REGIONS.map((reg) => {
               const isSelected = selectedRegion === reg.code;
               return (
@@ -136,6 +151,36 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
               );
             })}
           </div>
+
+          {/* State / Province Selection */}
+          {availableStates.length > 0 && (
+            <div className="flex flex-col gap-1.5 pt-2 border-t border-[var(--border-subtle)]">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--accent-primary)] flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5" />
+                Select State / Province:
+              </label>
+              <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+                {availableStates.map((st) => {
+                  const isSelected = selectedState === st.name;
+                  return (
+                    <button
+                      key={st.code}
+                      type="button"
+                      onClick={() => setSelectedState(st.name)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all text-left flex items-center gap-1.5 ${
+                        isSelected
+                          ? 'bg-[var(--accent-primary)] text-[var(--canvas-bg)] border-[var(--accent-primary)] font-semibold shadow-sm'
+                          : 'bg-[var(--surface-hover)] text-[var(--text-muted)] border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      <span>{st.name}</span>
+                      {isSelected && <Check className="w-3 h-3" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Section 2: Preferred Languages */}

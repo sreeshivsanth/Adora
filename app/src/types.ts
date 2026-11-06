@@ -28,6 +28,7 @@ export interface Playlist {
 
 export interface UserPreferences {
   region: string; // Country code e.g. 'IN', 'US', 'GB', 'CA', etc.
+  state?: string; // State / Province e.g. 'Tamil Nadu', 'Maharashtra', 'California', etc.
   preferredLanguages: string[];
   favoriteArtists: string[];
   onboardingCompleted: boolean;

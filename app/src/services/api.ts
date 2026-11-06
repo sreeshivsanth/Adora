@@ -59,12 +59,18 @@ export async function searchTracks(
 export async function fetchTrendingTracks(
   languages: string[] = ['tamil', 'hindi', 'english'], 
   region: string = 'IN',
+  state?: string,
   token?: string
 ) {
   const headers: Record<string, string> = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetchWithFallback(`/api/trending?languages=${encodeURIComponent(languages.join(','))}&region=${encodeURIComponent(region)}`, {
+  const params = new URLSearchParams();
+  params.append('languages', languages.join(','));
+  params.append('region', region);
+  if (state) params.append('state', state);
+
+  const res = await fetchWithFallback(`/api/trending?${params.toString()}`, {
     headers
   });
   return res.json();
@@ -151,7 +157,7 @@ export async function fetchUserPreferences(token?: string) {
   return res.json();
 }
 
-export async function saveUserPreferences(prefs: { region?: string; preferredLanguages: string[]; favoriteArtists: string[]; onboardingCompleted: boolean }, token?: string) {
+export async function saveUserPreferences(prefs: { region?: string; state?: string; preferredLanguages: string[]; favoriteArtists: string[]; onboardingCompleted: boolean }, token?: string) {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Globe2, Heart, ArrowRight, Check, MapPin, Search } from 'lucide-react';
 import { UserPreferences } from '../types';
-import { REGIONS, RegionOption } from '../data/regions';
+import { REGIONS, RegionOption, StateOption, getStatesForRegion } from '../data/regions';
 import { searchMatchingArtists, ARTISTS_DATABASE } from '../data/artists';
 
 interface OnboardingModalProps {
@@ -30,16 +30,28 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
 }) => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedRegion, setSelectedRegion] = useState<string>('IN');
-  const [selectedLangs, setSelectedLangs] = useState<string[]>(['tamil', 'hindi', 'english']);
+  const [selectedState, setSelectedState] = useState<string>('Tamil Nadu');
+  const [selectedLangs, setSelectedLangs] = useState<string[]>(['tamil', 'english']);
   const [selectedArtists, setSelectedArtists] = useState<string[]>(['A.R. Rahman', 'Anirudh Ravichander', 'Arijit Singh']);
   const [customArtist, setCustomArtist] = useState('');
 
   if (!isOpen) return null;
 
+  const availableStates = getStatesForRegion(selectedRegion);
+
   const handleSelectRegion = (reg: RegionOption) => {
     setSelectedRegion(reg.code);
-    if (reg.defaultLanguages && reg.defaultLanguages.length > 0) {
-      setSelectedLangs(reg.defaultLanguages);
+    const states = reg.states || [];
+    if (states.length > 0) {
+      setSelectedState(states[0].name);
+      if (states[0].defaultLanguages) {
+        setSelectedLangs(states[0].defaultLanguages);
+      }
+    } else {
+      setSelectedState('');
+      if (reg.defaultLanguages && reg.defaultLanguages.length > 0) {
+        setSelectedLangs(reg.defaultLanguages);
+      }
     }
   };
 
@@ -67,6 +79,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   const handleFinish = () => {
     onComplete({
       region: selectedRegion,
+      state: selectedState,
       preferredLanguages: selectedLangs.length > 0 ? selectedLangs : ['tamil', 'hindi', 'english'],
       favoriteArtists: selectedArtists,
       onboardingCompleted: true
@@ -95,20 +108,21 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </div>
         </div>
 
-        {/* STEP 1: Select Region / Country */}
+        {/* STEP 1: Select Region & State */}
         {step === 1 && (
           <div className="flex flex-col gap-4 animate-fadeIn">
             <div>
               <h2 className="text-xl font-serif font-bold text-[var(--text-primary)] flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-[var(--accent-primary)]" />
-                Select Your Region & Charts
+                Select Your Country & State
               </h2>
               <p className="text-xs text-[var(--text-muted)] mt-1">
-                Your selected country powers your live trending charts and regional discovery feeds.
+                Your selected location tunes your live trending charts and regional culture feeds.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
+            {/* Country Selector */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
               {REGIONS.map((reg) => {
                 const isSelected = selectedRegion === reg.code;
                 return (
@@ -116,14 +130,14 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                     key={reg.code}
                     type="button"
                     onClick={() => handleSelectRegion(reg)}
-                    className={`p-3 rounded-2xl border flex items-center justify-between gap-3 text-left transition-all ${
+                    className={`p-2.5 rounded-2xl border flex items-center justify-between gap-3 text-left transition-all ${
                       isSelected
                         ? 'bg-[var(--accent-primary)] text-[var(--canvas-bg)] border-[var(--accent-primary)] shadow-md scale-[1.02]'
                         : 'bg-[var(--surface-hover)] text-[var(--text-primary)] border-[var(--border-subtle)] hover:border-[var(--accent-primary)]/50'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="text-2xl">{reg.flag}</span>
+                      <span className="text-xl">{reg.flag}</span>
                       <div className="min-w-0">
                         <div className="text-xs font-bold truncate">{reg.name}</div>
                         <div className={`text-[10px] truncate ${isSelected ? 'text-[var(--canvas-bg)]/80' : 'text-[var(--text-muted)]'}`}>
@@ -131,15 +145,50 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                         </div>
                       </div>
                     </div>
-                    {isSelected && <Check className="w-4 h-4 flex-shrink-0" />}
+                    {isSelected && <Check className="w-3.5 h-3.5 flex-shrink-0" />}
                   </button>
                 );
               })}
             </div>
 
+            {/* State / Province Selector */}
+            {availableStates.length > 0 && (
+              <div className="flex flex-col gap-2 pt-2 border-t border-[var(--border-subtle)]">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--accent-primary)] flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5" />
+                  Select State / Province:
+                </label>
+                <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+                  {availableStates.map((st) => {
+                    const isSelected = selectedState === st.name;
+                    return (
+                      <button
+                        key={st.code}
+                        type="button"
+                        onClick={() => {
+                          setSelectedState(st.name);
+                          if (st.defaultLanguages && st.defaultLanguages.length > 0) {
+                            setSelectedLangs(st.defaultLanguages);
+                          }
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all text-left flex items-center gap-1.5 ${
+                          isSelected
+                            ? 'bg-[var(--accent-primary)] text-[var(--canvas-bg)] border-[var(--accent-primary)] font-semibold shadow-sm'
+                            : 'bg-[var(--surface-hover)] text-[var(--text-muted)] border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
+                        }`}
+                      >
+                        <span>{st.name}</span>
+                        {isSelected && <Check className="w-3 h-3" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <button
               onClick={() => setStep(2)}
-              className="w-full py-3 rounded-2xl bg-[var(--accent-primary)] text-[var(--canvas-bg)] text-xs font-semibold flex items-center justify-center gap-2 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all mt-2"
+              className="w-full py-3 rounded-2xl bg-[var(--accent-primary)] text-[var(--canvas-bg)] text-xs font-semibold flex items-center justify-center gap-2 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all mt-1"
             >
               <span>Continue to Music Languages</span>
               <ArrowRight className="w-4 h-4" />
