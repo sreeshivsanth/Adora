@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Minimize2, Play, Pause, SkipBack, SkipForward, RotateCcw, RotateCw, Sparkles, Heart, Activity } from 'lucide-react';
+import { Minimize2, Play, Pause, SkipBack, SkipForward, RotateCcw, RotateCw, Sparkles, Heart, Activity, Music, Mic2, AlertCircle } from 'lucide-react';
 import { Track } from '../types';
-import { getSyncedLyricsForTrack, LyricLine } from '../data/lyrics';
+import { LyricLine } from '../data/lyrics';
+import { AuroraBilateralWave } from './AuroraBilateralWave';
+import { fetchTrackLyrics } from '../services/api';
 import confetti from 'canvas-confetti';
 
 interface LivingRoomModeProps {
@@ -53,8 +55,41 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
     ? Math.min(100, Math.max(0, (positionSec / totalDuration) * 100))
     : 0;
 
-  // Synced lyrics from database or intelligent procedural lyrical generator
-  const lyrics: LyricLine[] = getSyncedLyricsForTrack(track.title, track.artist, totalDuration);
+  // Real, accurate synchronized lyrics fetched dynamically from server / LRCLIB
+  const [lyrics, setLyrics] = useState<LyricLine[]>([]);
+  const [isSynced, setIsSynced] = useState<boolean>(true);
+  const [isLoadingLyrics, setIsLoadingLyrics] = useState<boolean>(true);
+  const [lyricsAvailable, setLyricsAvailable] = useState<boolean>(true);
+
+  useEffect(() => {
+    let active = true;
+    setIsLoadingLyrics(true);
+    setLyricsAvailable(true);
+
+    fetchTrackLyrics(track.title, track.artist, totalDuration)
+      .then(res => {
+        if (!active) return;
+        setIsLoadingLyrics(false);
+        if (res && res.available && res.lines && res.lines.length > 0) {
+          setLyrics(res.lines);
+          setIsSynced(res.synced);
+          setLyricsAvailable(true);
+        } else {
+          setLyrics([]);
+          setIsSynced(false);
+          setLyricsAvailable(false);
+        }
+      })
+      .catch(() => {
+        if (!active) return;
+        setIsLoadingLyrics(false);
+        setLyrics([]);
+        setIsSynced(false);
+        setLyricsAvailable(false);
+      });
+
+    return () => { active = false; };
+  }, [track.id, track.title, track.artist, totalDuration]);
 
   // Find currently active lyric line index based on playback position
   let activeIndex = 0;
@@ -68,13 +103,13 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
 
   // Smoothly auto-scroll the active line into center view
   useEffect(() => {
-    if (activeLineRef.current) {
+    if (activeLineRef.current && lyrics.length > 0) {
       activeLineRef.current.scrollIntoView({
         behavior: 'smooth',
         block: 'center'
       });
     }
-  }, [activeIndex]);
+  }, [activeIndex, lyrics.length]);
 
   const handleSendReaction = (_emoji: string) => {
     confetti({
@@ -138,50 +173,18 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
             <div className="absolute w-4 h-4 rounded-full bg-[var(--canvas-bg)] border border-neutral-700" />
           </div>
 
-          {/* LIVE ACOUSTIC WAVE VISUALIZER (Dancing in sync with song playback) */}
-          <div className="mt-5 flex flex-col items-center gap-1.5">
-            <div className="flex items-end gap-1.5 h-10 px-4 py-1.5 rounded-full bg-[var(--surface-card)]/80 border border-[var(--border-subtle)] shadow-sm backdrop-blur-sm">
-              {[
-                { base: 35, speed: 0.6 },
-                { base: 65, speed: 0.4 },
-                { base: 90, speed: 0.7 },
-                { base: 50, speed: 0.5 },
-                { base: 100, speed: 0.3 },
-                { base: 75, speed: 0.6 },
-                { base: 40, speed: 0.8 },
-                { base: 85, speed: 0.4 },
-                { base: 95, speed: 0.5 },
-                { base: 60, speed: 0.7 },
-                { base: 80, speed: 0.3 },
-                { base: 45, speed: 0.6 },
-                { base: 90, speed: 0.5 },
-                { base: 70, speed: 0.4 },
-                { base: 100, speed: 0.6 },
-                { base: 55, speed: 0.7 },
-                { base: 85, speed: 0.3 },
-                { base: 40, speed: 0.5 }
-              ].map((bar, idx) => {
-                // If paused, bars settle down into a calm resting state
-                const currentHeight = isPlaying 
-                  ? `${Math.max(15, Math.min(100, bar.base + Math.sin((positionSec * 4) + idx) * 35))}%` 
-                  : '15%';
-
-                return (
-                  <div
-                    key={idx}
-                    className="w-1 rounded-full bg-[var(--accent-primary)] transition-all duration-150 shadow-sm"
-                    style={{
-                      height: currentHeight,
-                      opacity: isPlaying ? 0.9 : 0.3,
-                      transform: isPlaying ? 'scaleY(1)' : 'scaleY(0.5)'
-                    }}
-                  />
-                );
-              })}
+          {/* OPTION 2: AURORA BILATERAL ENVELOPE (Centered Sound Visualizer) */}
+          <div className="mt-4 flex flex-col items-center w-full max-w-xs md:max-w-sm">
+            <div className="w-full px-3 py-1.5 rounded-2xl bg-[var(--surface-card)]/80 border border-[var(--border-subtle)] shadow-sm backdrop-blur-sm flex flex-col items-center">
+              <AuroraBilateralWave isPlaying={isPlaying} height={72} className="w-full" />
+              <div className="w-full flex items-center justify-between px-2 pt-1 border-t border-[var(--border-subtle)]/40 text-[9px] font-mono text-[var(--accent-primary)] opacity-85 uppercase">
+                <span className="flex items-center gap-1.5">
+                  <span className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-emerald-400 animate-ping' : 'bg-neutral-500'}`} />
+                  {isPlaying ? 'Option 2: Aurora Bilateral Wave' : 'Harmonic Rest'}
+                </span>
+                <span>40–120 Hz Sub-Bass</span>
+              </div>
             </div>
-            <span className="text-[10px] font-mono tracking-wider text-[var(--accent-primary)] opacity-80 uppercase">
-              {isPlaying ? '♪ Acoustic Waves Synchronized' : 'Paused • Ready to Play'}
-            </span>
           </div>
 
           {/* Social Sync Bubble (if active) */}
@@ -201,9 +204,16 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
           {/* Track Header */}
           <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2.5">
             <div className="min-w-0">
-              <h2 className="text-xl md:text-2xl font-serif font-bold text-[var(--text-primary)] tracking-tight truncate">
-                {track.title}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl md:text-2xl font-serif font-bold text-[var(--text-primary)] tracking-tight truncate">
+                  {track.title}
+                </h2>
+                {isSynced && lyricsAvailable && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 shrink-0">
+                    <Mic2 className="w-3 h-3" /> Live Synced
+                  </span>
+                )}
+              </div>
               <p className="text-xs font-medium text-[var(--text-muted)] truncate mt-0.5">
                 {track.artist} — {track.album}
               </p>
@@ -217,46 +227,69 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
             </button>
           </div>
 
-          {/* Live Auto-Scrolling Synced Lyrics Container */}
-          <div 
-            ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto px-4 py-6 rounded-3xl bg-[var(--surface-card)] border border-[var(--border-subtle)] flex flex-col gap-4 shadow-inner no-scrollbar scroll-smooth"
-          >
-            {lyrics.map((line, idx) => {
-              const isActive = idx === activeIndex;
-              const isPast = idx < activeIndex;
+          {/* Live Auto-Scrolling Synced Lyrics Container / Loading / Empty State */}
+          {isLoadingLyrics ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 rounded-3xl bg-[var(--surface-card)] border border-[var(--border-subtle)] shadow-inner gap-3">
+              <div className="w-10 h-10 rounded-full bg-[var(--surface-hover)] flex items-center justify-center text-[var(--accent-primary)] animate-pulse">
+                <Music className="w-5 h-5" />
+              </div>
+              <p className="text-xs font-medium text-[var(--text-muted)] animate-pulse">
+                Retrieving synchronized lyrics...
+              </p>
+            </div>
+          ) : !lyricsAvailable || lyrics.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 rounded-3xl bg-[var(--surface-card)] border border-[var(--border-subtle)] shadow-inner">
+              <div className="w-12 h-12 rounded-full bg-[var(--surface-hover)] flex items-center justify-center text-[var(--accent-primary)] mb-3">
+                <Music className="w-6 h-6 opacity-60" />
+              </div>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)]">Lyrics Not Available</h3>
+              <p className="text-xs text-[var(--text-muted)] mt-1.5 max-w-xs leading-relaxed">
+                Accurate lyrics are not available for this song. Enjoy the pure acoustic soundscape with Option 2 Aurora Bilateral visualizer.
+              </p>
+            </div>
+          ) : (
+            <div 
+              ref={scrollContainerRef}
+              className="flex-1 overflow-y-auto px-4 py-6 rounded-3xl bg-[var(--surface-card)] border border-[var(--border-subtle)] flex flex-col gap-4 shadow-inner no-scrollbar scroll-smooth"
+            >
+              {lyrics.map((line, idx) => {
+                const isActive = idx === activeIndex;
+                const isPast = idx < activeIndex;
 
-              return (
-                <div
-                  key={idx}
-                  ref={isActive ? activeLineRef : null}
-                  onClick={() => onSeek && onSeek(line.time)}
-                  className={`cursor-pointer transition-all duration-300 py-1 px-3 rounded-2xl flex items-center justify-between group ${
-                    isActive
-                      ? 'bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 scale-105 shadow-sm'
-                      : 'hover:bg-[var(--surface-hover)]/40'
-                  }`}
-                  title={`Click to jump to ${formatTime(line.time)}`}
-                >
-                  <p
-                    className={`leading-relaxed transition-all ${
+                return (
+                  <div
+                    key={idx}
+                    ref={isActive ? activeLineRef : null}
+                    onClick={() => isSynced && onSeek && onSeek(line.time)}
+                    className={`cursor-pointer transition-all duration-300 py-1 px-3 rounded-2xl flex items-center justify-between group ${
                       isActive
-                        ? 'text-base md:text-lg font-bold text-[var(--accent-primary)]'
-                        : isPast
-                        ? 'text-xs md:text-sm text-[var(--text-muted)] opacity-60'
-                        : 'text-xs md:text-sm text-[var(--text-muted)] opacity-35'
+                        ? 'bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 scale-105 shadow-sm'
+                        : 'hover:bg-[var(--surface-hover)]/40'
                     }`}
+                    title={isSynced ? `Click to jump to ${formatTime(line.time)}` : undefined}
                   >
-                    {line.text}
-                  </p>
-                  
-                  <span className={`text-[10px] font-mono transition-opacity ${isActive ? 'text-[var(--accent-primary)] opacity-100 font-bold' : 'text-[var(--text-muted)] opacity-0 group-hover:opacity-70'}`}>
-                    {formatTime(line.time)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                    <p
+                      className={`leading-relaxed transition-all ${
+                        isActive
+                          ? 'text-base md:text-lg font-bold text-[var(--accent-primary)]'
+                          : isPast
+                          ? 'text-xs md:text-sm text-[var(--text-muted)] opacity-60'
+                          : 'text-xs md:text-sm text-[var(--text-muted)] opacity-35'
+                      }`}
+                    >
+                      {line.text}
+                    </p>
+                    
+                    {isSynced && (
+                      <span className={`text-[10px] font-mono transition-opacity ${isActive ? 'text-[var(--accent-primary)] opacity-100 font-bold' : 'text-[var(--text-muted)] opacity-0 group-hover:opacity-70'}`}>
+                        {formatTime(line.time)}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Reactions */}
           <div className="flex items-center justify-between px-2">

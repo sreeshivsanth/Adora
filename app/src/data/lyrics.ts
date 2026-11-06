@@ -98,7 +98,7 @@ export const SYNCED_LYRICS_DB: Record<string, LyricLine[]> = {
   ]
 };
 
-export function getSyncedLyricsForTrack(title: string, artist: string, durationSec: number = 200): LyricLine[] {
+export function getSyncedLyricsForTrack(title: string, artist: string, _durationSec: number = 200): LyricLine[] {
   const query = `${title.toLowerCase()} ${artist.toLowerCase()}`;
   
   if (query.includes('vaathi')) return SYNCED_LYRICS_DB['vaathi'];
@@ -107,19 +107,7 @@ export function getSyncedLyricsForTrack(title: string, artist: string, durationS
   if (query.includes('hukum')) return SYNCED_LYRICS_DB['hukum'];
   if (query.includes('starboy')) return SYNCED_LYRICS_DB['starboy'];
 
-  // Procedural dynamic lyrical movement synced precisely to duration:
-  const step = Math.max(8, Math.floor(durationSec / 12));
-  return [
-    { time: 0, text: `♪ [Acoustic Intro • Listening to "${title}"] ♪` },
-    { time: Math.floor(step * 0.8), text: `Drifting softly into the rhythm of ${artist}...` },
-    { time: Math.floor(step * 1.8), text: `Soundwaves dancing in warm ambient warmth,` },
-    { time: Math.floor(step * 2.8), text: `Every note resonant, soothing and deeply alive.` },
-    { time: Math.floor(step * 4.0), text: `♪ [Harmonic Chorus & Melodic Elevation] ♪` },
-    { time: Math.floor(step * 5.2), text: `Lost in the serene cadence of ${title},` },
-    { time: Math.floor(step * 6.4), text: `Echoes reflecting through tranquil analog chambers.` },
-    { time: Math.floor(step * 7.6), text: `No rush, just the pure acoustic vibration.` },
-    { time: Math.floor(step * 9.0), text: `♪ [Dynamic Instrumental Flow] ♪` },
-    { time: Math.floor(step * 10.2), text: `Floating effortlessly as the melody fades into calm...` },
-    { time: Math.floor(step * 11.2), text: `♪ [Gentle Acoustic Outro] ♪` }
-  ];
+  // Return empty array when lyrics are not in the local offline dictionary
+  return [];
 }
+

@@ -197,3 +197,30 @@ export function resolveAudioUrl(url?: string): string | undefined {
   const configuredBase = (import.meta.env.VITE_API_URL || DEFAULT_API_BASE).trim();
   return `${configuredBase}${url.startsWith('/') ? '' : '/'}${url}`;
 }
+
+export interface TrackLyricsResponse {
+  available: boolean;
+  synced: boolean;
+  lines: { time: number; text: string }[];
+  plainLyrics?: string;
+  source?: string;
+  error?: string;
+}
+
+export async function fetchTrackLyrics(title: string, artist?: string, durationSec?: number): Promise<TrackLyricsResponse> {
+  try {
+    const params = new URLSearchParams();
+    params.set('title', title);
+    if (artist) params.set('artist', artist);
+    if (durationSec) params.set('duration', durationSec.toString());
+
+    const res = await fetchWithFallback(`/api/lyrics?${params.toString()}`);
+    if (!res.ok) {
+      return { available: false, synced: false, lines: [] };
+    }
+    return await res.json();
+  } catch (err) {
+    console.warn('[Adora API] Failed to fetch lyrics:', err);
+    return { available: false, synced: false, lines: [] };
+  }
+}

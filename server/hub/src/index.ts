@@ -522,6 +522,178 @@ app.get('/api/trending', optionalToken, async (req: AuthenticatedRequest, res: R
 });
 
 // -------------------------------------------------------------
+// Real-Time Synchronized Lyrics Engine (LRCLIB Integration)
+// -------------------------------------------------------------
+interface LyricLineItem {
+  time: number; // in seconds (with decimals)
+  text: string;
+}
+
+interface LyricsCacheEntry {
+  available: boolean;
+  synced: boolean;
+  lines: LyricLineItem[];
+  plainLyrics?: string;
+  source: string;
+  expiresAt: number;
+}
+
+const lyricsCache = new Map<string, LyricsCacheEntry>();
+
+function parseLrc(lrcText: string): LyricLineItem[] {
+  const lines: LyricLineItem[] = [];
+  if (!lrcText) return lines;
+
+  for (const rawLine of lrcText.split('\n')) {
+    const trimmed = rawLine.trim();
+    if (!trimmed) continue;
+    // Matches [mm:ss.xx] or [mm:ss]
+    const match = trimmed.match(/^\[(\d{1,2}):(\d{2}(?:\.\d+)?)\]\s*(.*)$/);
+    if (match) {
+      const mins = parseInt(match[1], 10);
+      const secs = parseFloat(match[2]);
+      const text = match[3].trim();
+      if (text) {
+        lines.push({
+          time: parseFloat((mins * 60 + secs).toFixed(2)),
+          text
+        });
+      }
+    }
+  }
+
+  return lines.sort((a, b) => a.time - b.time);
+}
+
+function cleanSongTitleForLyrics(title: string): string {
+  return title
+    .replace(/\s*\(From\s+["'][^"']+["']\)/gi, '')
+    .replace(/\s*\(feat\.[^)]+\)/gi, '')
+    .replace(/\s*\(ft\.[^)]+\)/gi, '')
+    .replace(/\s*\[Official[^\]]*\]/gi, '')
+    .replace(/\s*\(Official[^)]*\)/gi, '')
+    .replace(/\s*-\s*From\s+["'][^"']+["']/gi, '')
+    .replace(/\s*\(Original[^)]*\)/gi, '')
+    .trim();
+}
+
+app.get('/api/lyrics', optionalToken, async (req: AuthenticatedRequest, res: Response) => {
+  const rawTitle = (req.query.title as string || '').trim();
+  const rawArtist = (req.query.artist as string || '').trim();
+  const durationSec = parseFloat(req.query.duration as string || '0');
+
+  if (!rawTitle) {
+    res.status(400).json({ error: 'Title is required' });
+    return;
+  }
+
+  const cleanTitle = cleanSongTitleForLyrics(rawTitle);
+  const cleanArtist = rawArtist.split('&')[0].split(',')[0].trim();
+  const cacheKey = `${cleanTitle.toLowerCase()}:::${cleanArtist.toLowerCase()}`;
+  const now = Date.now();
+
+  const cached = lyricsCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    res.json(cached);
+    return;
+  }
+
+  try {
+    let matchItem: any = null;
+
+    // 1. Try exact get endpoint
+    try {
+      const getUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}`;
+      const getResp = await fetch(getUrl, {
+        headers: { 'User-Agent': 'AudoraApp/1.0 (https://github.com/audora)' }
+      });
+      if (getResp.ok) {
+        matchItem = await getResp.json();
+      }
+    } catch {}
+
+    // 2. If not found or no synced lyrics, try broad search query
+    if (!matchItem || (!matchItem.syncedLyrics && !matchItem.plainLyrics)) {
+      try {
+        const query = `${cleanTitle} ${cleanArtist}`.trim();
+        const searchUrl = `https://lrclib.net/api/search?q=${encodeURIComponent(query)}`;
+        const searchResp = await fetch(searchUrl, {
+          headers: { 'User-Agent': 'AudoraApp/1.0 (https://github.com/audora)' }
+        });
+        if (searchResp.ok) {
+          const list: any[] = await searchResp.json();
+          // Find first entry with syncedLyrics
+          matchItem = list.find((item: any) => item.syncedLyrics) || list.find((item: any) => item.plainLyrics) || null;
+        }
+      } catch {}
+    }
+
+    // 3. Fallback: Search with raw title only if still nothing found
+    if (!matchItem || (!matchItem.syncedLyrics && !matchItem.plainLyrics)) {
+      try {
+        const searchUrl = `https://lrclib.net/api/search?track_name=${encodeURIComponent(cleanTitle)}`;
+        const searchResp = await fetch(searchUrl, {
+          headers: { 'User-Agent': 'AudoraApp/1.0 (https://github.com/audora)' }
+        });
+        if (searchResp.ok) {
+          const list: any[] = await searchResp.json();
+          matchItem = list.find((item: any) => item.syncedLyrics) || list.find((item: any) => item.plainLyrics) || null;
+        }
+      } catch {}
+    }
+
+    let responseData: LyricsCacheEntry;
+
+    if (matchItem && matchItem.syncedLyrics) {
+      const lines = parseLrc(matchItem.syncedLyrics);
+      responseData = {
+        available: lines.length > 0,
+        synced: true,
+        lines,
+        source: 'lrclib_synced',
+        expiresAt: now + 24 * 60 * 60 * 1000
+      };
+    } else if (matchItem && matchItem.plainLyrics) {
+      const rawLines = matchItem.plainLyrics.split('\n').map((l: string) => l.trim()).filter(Boolean);
+      const approxDuration = durationSec > 0 ? durationSec : (matchItem.duration || 210);
+      const step = approxDuration / Math.max(1, rawLines.length);
+      const lines: LyricLineItem[] = rawLines.map((text: string, idx: number) => ({
+        time: parseFloat((idx * step).toFixed(2)),
+        text
+      }));
+      responseData = {
+        available: lines.length > 0,
+        synced: false,
+        lines,
+        plainLyrics: matchItem.plainLyrics,
+        source: 'lrclib_plain',
+        expiresAt: now + 24 * 60 * 60 * 1000
+      };
+    } else {
+      responseData = {
+        available: false,
+        synced: false,
+        lines: [],
+        source: 'none',
+        expiresAt: now + 6 * 60 * 60 * 1000
+      };
+    }
+
+    lyricsCache.set(cacheKey, responseData);
+    res.json(responseData);
+  } catch (err: any) {
+    console.warn('[Lyrics Fetch Error]', err.message);
+    res.json({
+      available: false,
+      synced: false,
+      lines: [],
+      error: 'Failed to retrieve lyrics',
+      source: 'error'
+    });
+  }
+});
+
+// -------------------------------------------------------------
 // YouTube Music Direct Stream Engine & In-Memory Stream Cache
 // -------------------------------------------------------------
 

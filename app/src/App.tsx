@@ -36,6 +36,20 @@ const INITIAL_TRACKS: Track[] = [
     isStarred: true
   },
   {
+    id: 'itunes_1699735327',
+    title: 'Hukum - Thalaivar Alappara',
+    artist: 'Anirudh Ravichander & Super Subu',
+    album: 'Jailer (Original Motion Picture Soundtrack)',
+    language: 'tamil',
+    durationSec: 208,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/2c/df/14/2cdf140e-6d11-a98d-bfbf-bc5e30c3c4a1/197189528187.jpg/600x600bb.jpg',
+    audioUrl: '/api/stream/full?title=Hukum%20-%20Thalaivar%20Alappara&artist=Anirudh%20Ravichander%20%26%20Super%20Subu',
+    isLocal: false,
+    releaseYear: 2023,
+    mood: 'energetic',
+    genre: 'Soundtrack'
+  },
+  {
     id: 'itunes_1556858076',
     title: 'Enjoy Enjaami',
     artist: 'Dhee, Arivu & Santhosh Narayanan',
@@ -79,6 +93,90 @@ const INITIAL_TRACKS: Track[] = [
     isStarred: true
   },
   {
+    id: 'itunes_1169015785',
+    title: 'Channa Mereya',
+    artist: 'Pritam & Arijit Singh',
+    album: 'Ae Dil Hai Mushkil (Original Motion Picture Soundtrack)',
+    language: 'hindi',
+    durationSec: 289,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/bc/6e/4d/bc6e4d0c-adec-b431-7b60-16f5689f9664/886446201597.jpg/600x600bb.jpg',
+    audioUrl: '/api/stream/full?title=Channa%20Mereya&artist=Pritam%20%26%20Arijit%20Singh',
+    isLocal: false,
+    releaseYear: 2016,
+    mood: 'breakup',
+    genre: 'Bollywood'
+  },
+  {
+    id: 'itunes_1480710137',
+    title: 'Singappenney',
+    artist: 'A.R. Rahman & Shashaa Tirupati',
+    album: 'Bigil (Original Motion Picture Soundtrack)',
+    language: 'tamil',
+    durationSec: 364,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/59/87/49/598749cf-699b-6e50-b54e-cfc9cc05559c/886447987162.jpg/600x600bb.jpg',
+    audioUrl: '/api/stream/full?title=Singappenney&artist=A.R.%20Rahman%20%26%20Shashaa%20Tirupati',
+    isLocal: false,
+    releaseYear: 2019,
+    mood: 'motivation',
+    genre: 'Soundtrack'
+  },
+  {
+    id: 'itunes_1411628233',
+    title: 'Believer',
+    artist: 'Imagine Dragons',
+    album: 'Evolve',
+    language: 'english',
+    durationSec: 204,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/11/7a/b8/117ab805-6811-8929-18b9-0fad7baf0c25/17UMGIM98210.rgb.jpg/600x600bb.jpg',
+    audioUrl: '/api/stream/full?title=Believer&artist=Imagine%20Dragons',
+    isLocal: false,
+    releaseYear: 2017,
+    mood: 'motivation',
+    genre: 'Rock'
+  },
+  {
+    id: 'itunes_1528510449',
+    title: 'Nenjame (From "Doctor")',
+    artist: 'Anirudh Ravichander',
+    album: 'Nenjame (From "Doctor") - Single',
+    language: 'tamil',
+    durationSec: 256,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/b6/88/9e/b6889ea6-154b-3669-2d4c-05dcf4957bdb/886448724513.jpg/600x600bb.jpg',
+    audioUrl: '/api/stream/full?title=Nenjame%20%28From%20%22Doctor%22%29&artist=Anirudh%20Ravichander',
+    isLocal: false,
+    releaseYear: 2023,
+    mood: 'sad',
+    genre: 'Soundtrack'
+  },
+  {
+    id: 'itunes_1071074558',
+    title: 'Agar Tum Saath Ho',
+    artist: 'Alka Yagnik & Arijit Singh',
+    album: 'Tamasha (Original Motion Picture Soundtrack)',
+    language: 'hindi',
+    durationSec: 341,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/cb/ac/67/cbac673a-9213-7118-bb4e-2440273afb03/8902894357470_cover.jpg/600x600bb.jpg',
+    audioUrl: '/api/stream/full?title=Agar%20Tum%20Saath%20Ho&artist=Alka%20Yagnik%20%26%20Arijit%20Singh',
+    isLocal: false,
+    releaseYear: 2015,
+    mood: 'sad',
+    genre: 'Bollywood'
+  },
+  {
+    id: 'itunes_1544491998',
+    title: 'Someone Like You',
+    artist: 'Adele',
+    album: '21',
+    language: 'english',
+    durationSec: 285,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/eb/ca/25/ebca2596-cd1e-b295-91a3-771c868d0a79/191404113868.png/600x600bb.jpg',
+    audioUrl: '/api/stream/full?title=Someone%20Like%20You&artist=Adele',
+    isLocal: false,
+    releaseYear: 2011,
+    mood: 'breakup',
+    genre: 'Pop'
+  },
+  {
     id: 'itunes_1440857781',
     title: 'Midnight City',
     artist: 'M83',
@@ -89,7 +187,7 @@ const INITIAL_TRACKS: Track[] = [
     audioUrl: '/api/stream/full?title=Midnight+City&artist=M83',
     isLocal: false,
     releaseYear: 2011,
-    mood: 'focus',
+    mood: 'chill',
     genre: 'Electronic'
   },
   {
@@ -332,6 +430,9 @@ export default function App() {
     audioRef.current.volume = volume;
   }, [volume]);
 
+  // Ref to track currently active audio URL and avoid redundant reloads
+  const currentAudioSrcRef = useRef<string>('');
+
   // Clean Audio Source Synchronization
   useEffect(() => {
     const audio = audioRef.current;
@@ -343,20 +444,24 @@ export default function App() {
     }
 
     const targetSrc = resolveAudioUrl(currentTrack.audioUrl) || '';
-    if (audio.src !== targetSrc) {
+    if (currentAudioSrcRef.current !== targetSrc) {
+      currentAudioSrcRef.current = targetSrc;
       audio.src = targetSrc;
       audio.load();
       setPositionSec(0);
     }
 
     if (isPlaying) {
-      audio.play().catch((err) => {
-        console.warn('[Adora Playback]', err);
-      });
+      const p = audio.play();
+      if (p !== undefined) {
+        p.catch((err) => {
+          console.warn('[Adora Playback]', err);
+        });
+      }
     } else {
       audio.pause();
     }
-  }, [currentTrack, isPlaying]);
+  }, [currentTrack?.id, currentTrack?.audioUrl, isPlaying]);
 
   const handleLoadedMetadata = () => {
     if (audioRef.current && Number.isFinite(audioRef.current.duration) && audioRef.current.duration > 0) {
@@ -461,42 +566,75 @@ export default function App() {
     setIsPlaying(prev => !prev);
   };
 
+  // Master Comprehensive Pool of all tracks across initial catalog, trending, search, and recently played
+  const allAvailableTracks = useMemo<Track[]>(() => {
+    const map = new Map<string, Track>();
+    INITIAL_TRACKS.forEach(t => map.set(t.id, t));
+    trendingTracks.forEach(t => map.set(t.id, t));
+    tracks.forEach(t => map.set(t.id, t));
+    recentlyPlayed.forEach(t => map.set(t.id, t));
+    return Array.from(map.values());
+  }, [trendingTracks, tracks, recentlyPlayed]);
+
   // -------------------------------------------------------------
   // Smart Autoplay Algorithm: Determines upcoming track based on mood & taste
   // -------------------------------------------------------------
   const upcomingAutoplayTrack = useMemo<Track | null>(() => {
-    if (!currentTrack || tracks.length === 0) return null;
+    if (!currentTrack || allAvailableTracks.length <= 1) return null;
 
     const currentMood = (currentTrack.mood || 'chill').toLowerCase();
     const currentArtist = currentTrack.artist.toLowerCase();
     const currentLang = currentTrack.language.toLowerCase();
+    const currentGenre = (currentTrack.genre || '').toLowerCase();
 
-    // 1. First priority: match exact mood and user preferred languages/artists
-    const candidates = tracks.filter(t => t.id !== currentTrack.id);
+    // 1. Exclude the current playing track
+    const otherTracks = allAvailableTracks.filter(t => t.id !== currentTrack.id);
+    if (otherTracks.length === 0) return null;
 
-    // Try matching mood + language
-    const moodMatches = candidates.filter(t => 
+    // 2. Filter out recently played tracks (last 5) to prevent repetitive loops
+    const recentIds = new Set(recentlyPlayed.slice(0, 5).map(t => t.id));
+    const freshPool = otherTracks.filter(t => !recentIds.has(t.id));
+    const pool = freshPool.length > 0 ? freshPool : otherTracks;
+
+    // 3. Priority A: Exact Mood Match + Preferred Language
+    const moodLangMatches = pool.filter(t => 
       t.mood && t.mood.toLowerCase() === currentMood &&
       (userPreferences.preferredLanguages.includes(t.language) || t.language === currentLang)
     );
+    if (moodLangMatches.length > 0) {
+      return moodLangMatches[Math.floor(Math.random() * moodLangMatches.length)];
+    }
+
+    // 4. Priority B: Exact Mood Match (Any Language)
+    const moodMatches = pool.filter(t => t.mood && t.mood.toLowerCase() === currentMood);
     if (moodMatches.length > 0) {
       return moodMatches[Math.floor(Math.random() * moodMatches.length)];
     }
 
-    // Try matching same artist or same language
-    const artistMatches = candidates.filter(t => 
-      t.artist.toLowerCase().includes(currentArtist) || currentArtist.includes(t.artist.toLowerCase())
+    // 5. Priority C: Same Artist or Matching Genre
+    const artistOrGenreMatches = pool.filter(t => 
+      (t.artist.toLowerCase().includes(currentArtist) || currentArtist.includes(t.artist.toLowerCase())) ||
+      (currentGenre && t.genre && t.genre.toLowerCase() === currentGenre)
     );
-    if (artistMatches.length > 0) {
-      return artistMatches[0];
+    if (artistOrGenreMatches.length > 0) {
+      return artistOrGenreMatches[Math.floor(Math.random() * artistOrGenreMatches.length)];
     }
 
-    // Fallback to any different track in catalog
-    return candidates[0] || null;
-  }, [currentTrack, tracks, userPreferences]);
+    // 6. Priority D: User Preferred Language
+    const langMatches = pool.filter(t => 
+      userPreferences.preferredLanguages.includes(t.language) || t.language === currentLang
+    );
+    if (langMatches.length > 0) {
+      return langMatches[Math.floor(Math.random() * langMatches.length)];
+    }
+
+    // 7. General Fallback
+    return pool[Math.floor(Math.random() * pool.length)] || null;
+  }, [currentTrack, allAvailableTracks, recentlyPlayed, userPreferences]);
 
   // Song transition (Queue -> Smart Autoplay -> Sequential)
   const handleNext = () => {
+    // 1. Play next track from manual Queue
     if (queue.length > 0) {
       const [nextQueued, ...restQueue] = queue;
       setQueue(restQueue);
@@ -505,23 +643,25 @@ export default function App() {
       return;
     }
 
+    // 2. Play next track from Smart Autoplay
     if (upcomingAutoplayTrack) {
       playSongWithHistory(upcomingAutoplayTrack);
       showToast(`Smart Autoplay: ${upcomingAutoplayTrack.title} (${upcomingAutoplayTrack.mood || 'Mood Match'})`);
       return;
     }
 
-    if (!currentTrack || tracks.length === 0) return;
-    const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
-    const nextIndex = (currentIndex + 1) % tracks.length;
-    playSongWithHistory(tracks[nextIndex]);
+    // 3. Fallback to next track in allAvailableTracks pool
+    if (!currentTrack || allAvailableTracks.length === 0) return;
+    const currentIndex = allAvailableTracks.findIndex(t => t.id === currentTrack.id);
+    const nextIndex = (currentIndex + 1) % allAvailableTracks.length;
+    playSongWithHistory(allAvailableTracks[nextIndex]);
   };
 
   const handlePrev = () => {
-    if (!currentTrack || tracks.length === 0) return;
-    const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
-    const prevIndex = (currentIndex - 1 + tracks.length) % tracks.length;
-    playSongWithHistory(tracks[prevIndex]);
+    if (!currentTrack || allAvailableTracks.length === 0) return;
+    const currentIndex = allAvailableTracks.findIndex(t => t.id === currentTrack.id);
+    const prevIndex = (currentIndex - 1 + allAvailableTracks.length) % allAvailableTracks.length;
+    playSongWithHistory(allAvailableTracks[prevIndex]);
   };
 
   const playSongWithHistory = (track: Track) => {
