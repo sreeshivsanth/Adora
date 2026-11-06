@@ -107,6 +107,22 @@ if [ ! -x "$CLOUDFLARED" ]; then
   fi
 fi
 
+# 2b. Check / Download standalone yt-dlp binary for JIT dynamic ingestion
+YTDLP="$DIR/bin/yt-dlp"
+if [ ! -x "$YTDLP" ]; then
+  if command -v yt-dlp >/dev/null 2>&1; then
+    YTDLP="$(command -v yt-dlp)"
+    echo "[+] Using system yt-dlp: $YTDLP"
+  else
+    echo "[+] Downloading standalone yt-dlp binary into server/bin/..."
+    curl -fsSL -L "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" -o "$DIR/bin/yt-dlp"
+    chmod +x "$DIR/bin/yt-dlp"
+    echo "[+] yt-dlp successfully installed to $YTDLP"
+  fi
+fi
+export YTDLP_PATH="$YTDLP"
+export MUSIC_DIR="$DIR/music"
+
 # 3. (Optional) Run Navidrome via Podman if available
 if command -v podman >/dev/null 2>&1; then
   if ! podman ps --format "{{.Names}}" | grep -q "adora-navidrome"; then
@@ -145,7 +161,7 @@ cleanup() {
 trap cleanup SIGINT SIGTERM EXIT
 
 # Start Adora Hub in background
-PORT="${PORT:-8787}" node dist/index.js &
+PORT="${PORT:-8787}" YTDLP_PATH="$YTDLP" MUSIC_DIR="$DIR/music" node dist/index.js &
 HUB_PID=$!
 sleep 2
 

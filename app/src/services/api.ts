@@ -58,3 +58,19 @@ export async function requestPasswordReset(emailOrUsername: string) {
   });
   return res.json();
 }
+
+export async function fetchLocalTracks(token?: string) {
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}/api/tracks/local`, { headers });
+  return res.json();
+}
+
+export function resolveAudioUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('asset:')) {
+    return url;
+  }
+  return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
+}

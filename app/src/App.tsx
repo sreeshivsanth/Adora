@@ -9,6 +9,7 @@ import { AuthModal } from './components/AuthModal';
 import { TrackList } from './components/TrackList';
 import { Track, User, Device, BlendSession, AdminMetrics } from './types';
 import { Sparkles, Radio, CheckCircle, ShieldCheck } from 'lucide-react';
+import { searchTracks, requestIngest, fetchLocalTracks, resolveAudioUrl } from './services/api';
 
 const INITIAL_TRACKS: Track[] = [
   {
@@ -199,6 +200,42 @@ export function App() {
     }
   }, [isPlaying, currentTrack]);
 
+  // Live Worldwide Music Search (300ms debounce)
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      try {
+        const data = await searchTracks(searchQuery, selectedLanguage, currentUser?.token);
+        if (data && Array.isArray(data.results) && data.results.length > 0) {
+          setTracks(prev => {
+            const preserved = prev.filter(t => t.isStarred || t.isDownloaded);
+            const newIds = new Set(data.results.map((r: Track) => r.id));
+            const distinctPreserved = preserved.filter(t => !newIds.has(t.id));
+            return [...data.results, ...distinctPreserved];
+          });
+        }
+      } catch (err) {
+        console.warn('[Adora Live Search]', err);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedLanguage, currentUser?.token]);
+
+  // Initial load: Fetch local downloaded library from server
+  useEffect(() => {
+    fetchLocalTracks(currentUser?.token)
+      .then(res => {
+        if (res && Array.isArray(res.tracks) && res.tracks.length > 0) {
+          setTracks(prev => {
+            const existingIds = new Set(prev.map(t => t.id));
+            const newTracks = res.tracks.filter((t: Track) => !existingIds.has(t.id));
+            return [...newTracks, ...prev];
+          });
+        }
+      })
+      .catch(() => {});
+  }, [currentUser?.token]);
+
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       setPositionSec(Math.floor(audioRef.current.currentTime));
@@ -237,6 +274,13 @@ export function App() {
     setCurrentTrack(track);
     setIsPlaying(true);
     setPositionSec(0);
+
+    // If online track, trigger on-demand JIT ingestion in background
+    if (!track.isLocal) {
+      requestIngest({ title: track.title, artist: track.artist, language: track.language }, currentUser?.token)
+        .catch(e => console.warn('[Adora Ingestion Trigger]', e));
+    }
+
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch(e => console.warn(e));
@@ -262,12 +306,22 @@ export function App() {
     }));
   };
 
-  // Offline Download (Vault)
+  // Offline Download (Vault) & Server Permanent JIT Ingest
   const handleToggleDownload = (track: Track) => {
     setTracks(prev => prev.map(t => {
       if (t.id === track.id) {
         const isNowDownloaded = !t.isDownloaded;
-        showToast(isNowDownloaded ? 'Downloaded to Offline Vault' : 'Removed from Offline Vault');
+        showToast(isNowDownloaded ? 'Queued for Vault download' : 'Removed from Offline Vault');
+        if (isNowDownloaded) {
+          requestIngest({ title: track.title, artist: track.artist, language: track.language }, currentUser?.token)
+            .then(res => {
+              if (res && res.audioUrl) {
+                t.audioUrl = res.audioUrl;
+                t.isLocal = true;
+              }
+            })
+            .catch(e => console.warn('[Adora Download Queue]', e));
+        }
         return { ...t, isDownloaded: isNowDownloaded };
       }
       return t;
@@ -322,7 +376,7 @@ export function App() {
       {/* Real Audio Player Element */}
       <audio
         ref={audioRef}
-        src={currentTrack?.audioUrl}
+        src={resolveAudioUrl(currentTrack?.audioUrl)}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleNext}
       />

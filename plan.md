@@ -520,10 +520,12 @@ gantt
 - [x] **Navidrome Docker:** Production `server/docker-compose.yml` configured with `/music` and `/data` volumes with persistent volume mounts (`/music` and `/data`).
 
 ### Phase 2: Companion Hub Backend
-- [ ] **Just-in-Time (JIT) Ingestion:**
-  - [x] Search metadata resolver implemented in `server/hub/src/index.ts` (`/api/search`).
-  - [x] JIT background queue endpoint implemented in `server/hub/src/index.ts` (`/api/ingest`). and cover art embedding.
-  - [ ] Automatic Navidrome catalog scan trigger (`/rest/startScan`).
+- [x] **Just-in-Time (JIT) Ingestion:**
+  - [x] Search metadata resolver implemented in `server/hub/src/index.ts` (`/api/search`) with worldwide catalog and language curation (Tamil, Hindi, English, Korean).
+  - [x] JIT background queue endpoint implemented in `server/hub/src/index.ts` (`/api/ingest`) with standalone `yt-dlp` audio downloading, ID3 tagging, and thumbnail embedding.
+  - [x] Automatic Navidrome catalog scan trigger (`/rest/startScan`).
+  - [x] HTTP 206 Partial Content Audio Streaming route (`/api/stream`) with range seek support.
+  - [x] Local Library filesystem scanner (`/api/tracks/local`).
 - [ ] **Real-Time WebSocket Gateway:**
   - [x] **Adora Blend Engine:** WebSocket room manager and drift sync built in `server/hub/src/index.ts`., and +-100ms clock drift compensation.
   - [x] **Adora Connect Engine:** Multi-device remote control and handoff built in `server/hub/src/index.ts`., real-time remote playback control, and seamless stream handoff.
