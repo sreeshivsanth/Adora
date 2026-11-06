@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./logo.jpg" alt="Adora Logo" width="140" style="border-radius: 50%; box-shadow: 0 4px 20px rgba(79, 105, 76, 0.4);" />
+<img src="./logo.png" alt="Adora Logo" width="140" style="border-radius: 50%; box-shadow: 0 4px 20px rgba(79, 105, 76, 0.4);" />
 
 # Adora
 ### *Acoustic Sanctuary, Reimagined.*

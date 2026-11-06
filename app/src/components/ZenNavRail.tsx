@@ -32,7 +32,7 @@ export const ZenNavRail: React.FC<ZenNavRailProps> = ({
         title="Adora Home (Return to Discovery & Playlists)"
       >
         <img 
-          src="/logo.jpg" 
+          src="/logo.png" 
           alt="Adora" 
           className="w-full h-full object-cover rounded-full"
         />

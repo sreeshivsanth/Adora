@@ -26,7 +26,7 @@ Commercial streaming platforms prioritize algorithmic monetization, intrusive ad
 
 #### The Emblem / Logo
 * **Visual Identity:** A circular calligraphic monogram weaving **"ADORA"** into a musical **Treble Clef** and resonant soundwave ripples.
-* **Asset Location:** `logo.jpg` (stored in the project root directory).
+* **Asset Location:** `logo.png` (stored in the project root directory).
 * **Color Heritage Extracted from Asset:**
   * **Botanical Olive Background:** `#4F694C` (Organic Forest Sage)
   * **Glyphs & Lettering:** `#FFFFE7` (Warm Buttermilk Cream)
@@ -82,7 +82,7 @@ Instead of copying Spotify's dense spreadsheet layout, Adora adopts a **Studio &
 
 ### 2.1 The Key Structural Components
 1. **Zen Navigation Rail (Left):** Collapsible 64px vertical rail containing:
-   * **Brand Anchor:** Custom Adora circular monogram logo (`logo.jpg`).
+   * **Brand Anchor:** Custom Adora circular monogram logo (`logo.png`).
    * **Studio:** Now Playing, curated shelves, and language filter collections.
    * **Vault:** User's personal library (Playlists, Liked Songs, Offline Downloads).
    * **Blend Lounge:** Real-time synchronized listening campfire.
@@ -545,7 +545,7 @@ gantt
 - [ ] **Design System & Aesthetics:**
   - [x] Palette tokens configured in Tailwind: Botanical Olive (`#4F694C`) and Buttermilk Cream (`#FFFFE7`). (`#4F694C`) and Buttermilk Cream (`#FFFFE7`).
   - [x] Smooth theme toggle for Linen Light Mode and Midnight Moss Dark Mode implemented in `app/src/App.tsx`.
-  - [x] Custom `logo.jpg` integrated into navigation rail, header, living room mode, and app favicon., window titlebar, and splash screens.
+  - [x] Custom `logo.png` integrated into navigation rail, header, living room mode, and app favicon., window titlebar, and splash screens.
 - [ ] **Layout & Navigation:**
   - [x] Collapsible 64px Zen Navigation Rail built in `app/src/components/ZenNavRail.tsx`.
   - [x] Ambient Header with one-tap Language Filter Pills (`All`, `Tamil`, `Hindi`, `English`, `Korean`) built in `app/src/components/TopHeader.tsx`. (`All`, `Tamil`, `Hindi`, `English`, `Korean`).

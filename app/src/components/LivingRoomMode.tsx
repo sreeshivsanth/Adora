@@ -73,7 +73,7 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
       {/* Top Header: Title & Close Button */}
       <div className="w-full flex items-center justify-between max-w-5xl z-10">
         <div className="flex items-center gap-3">
-          <img src="/logo.jpg" alt="Adora" className="w-8 h-8 rounded-full border border-[var(--border-subtle)]" />
+          <img src="/logo.png" alt="Adora" className="w-8 h-8 rounded-full border border-[var(--border-subtle)]" />
           <span className="text-xs uppercase tracking-widest font-semibold text-[var(--accent-primary)]">
             Adora Acoustic Sanctuary
           </span>
