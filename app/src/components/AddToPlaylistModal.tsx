@@ -23,20 +23,26 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 select-none">
-      <div className="w-full max-w-sm bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded-3xl p-6 shadow-2xl flex flex-col gap-4">
+      <div className="w-full max-w-md bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded-3xl p-6 shadow-2xl flex flex-col gap-4 overflow-hidden relative">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]">
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-3 min-w-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="p-2 rounded-xl bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] flex-shrink-0">
               <FolderPlus className="w-5 h-5" />
             </div>
-            <div className="min-w-0">
-              <h3 className="text-base font-bold text-[var(--text-primary)] font-serif">Add to Playlist</h3>
-              <p className="text-xs text-[var(--text-muted)] truncate">{track.title} — {track.artist}</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-base font-bold text-[var(--text-primary)] font-serif truncate">Add to Playlist</h3>
+              <p className="text-xs text-[var(--text-muted)] truncate" title={`${track.title} — ${track.artist}`}>
+                {track.title} <span className="opacity-60">— {track.artist}</span>
+              </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-[var(--surface-hover)] text-[var(--text-muted)]">
+          <button 
+            onClick={onClose} 
+            className="flex-shrink-0 p-2 rounded-full hover:bg-[var(--surface-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+            title="Close"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -54,13 +60,13 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
                 <div
                   key={pl.id}
                   onClick={() => onToggleTrackInPlaylist(pl.id, track.id)}
-                  className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer border transition-all ${
+                  className={`flex items-center justify-between gap-3 p-3 rounded-2xl cursor-pointer border transition-all ${
                     isInPlaylist
                       ? 'bg-[var(--accent-primary)]/10 border-[var(--accent-primary)]/40 shadow-sm'
                       : 'bg-[var(--surface-hover)] hover:bg-[var(--border-subtle)] border-transparent'
                   }`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
                       {pl.coverUrl ? (
                         <img src={pl.coverUrl} alt={pl.name} className="w-full h-full object-cover" />
@@ -70,13 +76,13 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
                         </div>
                       )}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <h4 className="text-xs font-bold text-[var(--text-primary)] truncate">{pl.name}</h4>
-                      <p className="text-[11px] text-[var(--text-muted)]">{pl.trackIds.length} tracks</p>
+                      <p className="text-[11px] text-[var(--text-muted)] truncate">{pl.trackIds.length} tracks</p>
                     </div>
                   </div>
 
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center border flex-shrink-0 transition-all ${
                     isInPlaylist
                       ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)] text-white'
                       : 'border-[var(--border-subtle)] text-transparent'
@@ -105,3 +111,4 @@ export const AddToPlaylistModal: React.FC<AddToPlaylistModalProps> = ({
     </div>
   );
 };
+

@@ -90,7 +90,7 @@ export const FloatingPlayer: React.FC<FloatingPlayerProps> = ({
                 {isBlendSession && (
                   <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-medium">
                     <Sparkles className="w-2.5 h-2.5" />
-                    Blend
+                    Sync
                   </span>
                 )}
               </div>

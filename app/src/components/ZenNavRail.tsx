@@ -3,8 +3,8 @@ import { Disc3, FolderHeart, Users, Shield, Sun, Moon, Home, Settings } from 'lu
 import { User } from '../types';
 
 interface ZenNavRailProps {
-  currentTab: 'studio' | 'vault' | 'blend' | 'admin';
-  setCurrentTab: (tab: 'studio' | 'vault' | 'blend' | 'admin') => void;
+  currentTab: 'studio' | 'vault' | 'sync' | 'admin';
+  setCurrentTab: (tab: 'studio' | 'vault' | 'sync' | 'admin') => void;
   onGoHome: () => void;
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
@@ -68,16 +68,16 @@ export const ZenNavRail: React.FC<ZenNavRailProps> = ({
         </button>
 
         <button
-          onClick={() => setCurrentTab('blend')}
+          onClick={() => setCurrentTab('sync')}
           className={`p-3 rounded-2xl transition-all flex flex-col items-center gap-1 relative ${
-            currentTab === 'blend'
+            currentTab === 'sync'
               ? 'bg-[var(--accent-primary)] text-[var(--canvas-bg)] shadow-sm'
               : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
           }`}
-          title="Adora Blend (Group Sessions)"
+          title="Adora Sync (Group Listening Sessions)"
         >
           <Users className="w-5 h-5" />
-          <span className="text-[10px] font-medium hidden md:inline">Blend</span>
+          <span className="text-[10px] font-medium hidden md:inline">Sync</span>
         </button>
 
         {/* Admin Studio Button (Only active when logged in as Admin) */}

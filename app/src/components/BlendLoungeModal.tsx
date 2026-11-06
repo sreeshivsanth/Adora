@@ -26,7 +26,7 @@ export const BlendLoungeModal: React.FC<BlendLoungeModalProps> = ({
 
   const handleCopyInvite = () => {
     if (!session) return;
-    const inviteText = `Join my Adora Blend room: ${session.roomId} (adora://blend/join?code=${session.roomId})`;
+    const inviteText = `Join my Adora Sync room: ${session.roomId} (adora://sync/join?code=${session.roomId})`;
     navigator.clipboard.writeText(inviteText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -51,7 +51,7 @@ export const BlendLoungeModal: React.FC<BlendLoungeModalProps> = ({
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-[var(--text-primary)]">Adora Blend Lounge</h3>
+              <h3 className="text-lg font-bold text-[var(--text-primary)]">Adora Sync Lounge</h3>
               <p className="text-xs text-[var(--text-muted)]">Real-time synchronized listening campfire</p>
             </div>
           </div>
@@ -130,7 +130,7 @@ export const BlendLoungeModal: React.FC<BlendLoungeModalProps> = ({
               onClick={onLeaveBlend}
               className="w-full py-2.5 rounded-xl border border-rose-500/30 text-rose-500 hover:bg-rose-500/10 text-xs font-semibold transition-colors mt-2"
             >
-              Leave Blend Session
+              Leave Sync Session
             </button>
           </div>
         ) : (
@@ -143,7 +143,7 @@ export const BlendLoungeModal: React.FC<BlendLoungeModalProps> = ({
             <div className="max-w-xs">
               <h4 className="text-base font-bold text-[var(--text-primary)]">Listen with friends, anywhere</h4>
               <p className="text-xs text-[var(--text-muted)] mt-1">
-                Start a Blend room and send the invite link. Music stays synchronized to the exact millisecond across all devices.
+                Start a Sync room and send the invite link. Music stays synchronized to the exact millisecond across all devices.
               </p>
             </div>
 
@@ -151,7 +151,7 @@ export const BlendLoungeModal: React.FC<BlendLoungeModalProps> = ({
               onClick={onStartBlend}
               className="mt-2 px-6 py-2.5 rounded-full bg-[var(--accent-primary)] text-[var(--canvas-bg)] text-xs font-semibold shadow-md hover:scale-105 transition-transform"
             >
-              Start New Blend Session
+              Start New Sync Session
             </button>
           </div>
         )}

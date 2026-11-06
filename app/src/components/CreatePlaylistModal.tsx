@@ -53,17 +53,17 @@ export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({
       <div className="w-full max-w-md bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded-3xl p-6 shadow-2xl flex flex-col gap-5">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-[var(--accent-primary)]/15 text-[var(--accent-primary)]">
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-3 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className="p-2 rounded-xl bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] flex-shrink-0">
               <FolderPlus className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-[var(--text-primary)] font-serif">Create Playlist</h3>
-              <p className="text-xs text-[var(--text-muted)]">Organize your favorite sanctuary songs</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-lg font-bold text-[var(--text-primary)] font-serif truncate">Create Playlist</h3>
+              <p className="text-xs text-[var(--text-muted)] truncate">Organize your favorite sanctuary songs</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-[var(--surface-hover)] text-[var(--text-muted)]">
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-[var(--surface-hover)] text-[var(--text-muted)] flex-shrink-0">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -141,3 +141,4 @@ export const CreatePlaylistModal: React.FC<CreatePlaylistModalProps> = ({
     </div>
   );
 };
+

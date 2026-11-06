@@ -161,7 +161,7 @@ export const AdminStudioModal: React.FC<AdminStudioModalProps> = ({
           <div className="p-3.5 rounded-2xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] col-span-2 sm:col-span-1">
             <div className="flex items-center gap-1.5 text-[var(--text-muted)] text-xs">
               <Shield className="w-3.5 h-3.5 text-blue-500" />
-              <span>Active Blends</span>
+              <span>Active Sync Rooms</span>
             </div>
             <p className="text-xl font-bold text-[var(--text-primary)] mt-1">{activity.activeBlendRooms} Sessions</p>
           </div>

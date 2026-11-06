@@ -143,7 +143,7 @@ const DEFAULT_PLAYLISTS: Playlist[] = [
 
 export default function App() {
   const [darkMode, setDarkMode] = useState(true);
-  const [currentTab, setCurrentTab] = useState<'studio' | 'vault' | 'blend' | 'admin'>('studio');
+  const [currentTab, setCurrentTab] = useState<'studio' | 'vault' | 'sync' | 'admin'>('studio');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
   const [selectedMood, setSelectedMood] = useState<string>('all');
   const [selectedYearRange, setSelectedYearRange] = useState<{ min: number; max: number } | null>(null);
@@ -205,7 +205,7 @@ export default function App() {
 
   // Modals
   const [isLivingRoomOpen, setIsLivingRoomOpen] = useState(false);
-  const [isBlendModalOpen, setIsBlendModalOpen] = useState(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -229,8 +229,8 @@ export default function App() {
     lastSeen: Date.now()
   }));
 
-  // Blend Session State
-  const [blendSession, setBlendSession] = useState<BlendSession | null>(null);
+  // Sync Session State (formerly Blend)
+  const [syncSession, setSyncSession] = useState<BlendSession | null>(null);
 
   // Admin Metrics
   const [adminMetrics, setAdminMetrics] = useState<AdminMetrics>({
@@ -644,22 +644,22 @@ export default function App() {
     }));
   };
 
-  // Blend Sessions
-  const handleStartBlend = () => {
+  // Sync Sessions (Group listening)
+  const handleStartSync = () => {
     const newSession: BlendSession = {
-      roomId: `BLND-${Math.floor(1000 + Math.random() * 9000)}`,
+      roomId: `SYNC-${Math.floor(1000 + Math.random() * 9000)}`,
       isPlaying: isPlaying,
       currentTrack: currentTrack,
       positionSec: positionSec,
       participants: [currentUser?.username || 'You', 'Aarav', 'Maya']
     };
-    setBlendSession(newSession);
-    showToast(`Blend Room Created: ${newSession.roomId}`);
+    setSyncSession(newSession);
+    showToast(`Sync Room Created: ${newSession.roomId}`);
   };
 
-  const handleLeaveBlend = () => {
-    setBlendSession(null);
-    showToast('Left Blend room');
+  const handleLeaveSync = () => {
+    setSyncSession(null);
+    showToast('Left Sync room');
   };
 
   // Filtered tracks with Mood, Language, and Release Year Range support
@@ -738,7 +738,7 @@ export default function App() {
       <ZenNavRail
         currentTab={currentTab}
         setCurrentTab={(tab) => {
-          if (tab === 'blend') setIsBlendModalOpen(true);
+          if (tab === 'sync') setIsSyncModalOpen(true);
           else if (tab === 'admin') setIsAdminModalOpen(true);
           else {
             setActivePlaylistId(null);
@@ -815,10 +815,10 @@ export default function App() {
                           {currentTrack.language} • {currentTrack.isLocal ? 'High-Res Audio' : 'Instant Online Discovery'}
                           {currentTrack.releaseYear && ` • ${currentTrack.releaseYear}`}
                         </span>
-                        {blendSession && (
+                        {syncSession && (
                           <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold">
                             <Radio className="w-3 h-3 animate-pulse" />
-                            Blend Room {blendSession.roomId}
+                            Sync Room {syncSession.roomId}
                           </span>
                         )}
                       </div>
@@ -1068,7 +1068,7 @@ export default function App() {
           onVolumeChange={(vol) => setVolume(vol)}
           onOpenLivingRoom={() => setIsLivingRoomOpen(true)}
           onToggleDownload={handleToggleDownload}
-          isBlendSession={Boolean(blendSession)}
+          isBlendSession={Boolean(syncSession)}
           queueCount={queue.length}
           onOpenQueue={() => setIsQueueOpen(true)}
           onAddToPlaylist={(track) => setPlaylistTrackToAdd(track)}
@@ -1138,17 +1138,17 @@ export default function App() {
           onSeek={handleSeek}
           onFastForward={() => handleFastForward(10)}
           onRewind={() => handleRewind(10)}
-          isBlendSession={Boolean(blendSession)}
+          isBlendSession={Boolean(syncSession)}
         />
       )}
 
-      {/* Blend Lounge Modal */}
+      {/* Sync Lounge Modal (formerly Blend) */}
       <BlendLoungeModal
-        isOpen={isBlendModalOpen}
-        onClose={() => setIsBlendModalOpen(false)}
-        session={blendSession}
-        onStartBlend={handleStartBlend}
-        onLeaveBlend={handleLeaveBlend}
+        isOpen={isSyncModalOpen}
+        onClose={() => setIsSyncModalOpen(false)}
+        session={syncSession}
+        onStartBlend={handleStartSync}
+        onLeaveBlend={handleLeaveSync}
         currentTrack={currentTrack}
       />
 
