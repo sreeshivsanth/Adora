@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Minimize2, Play, Pause, SkipBack, SkipForward, Sparkles, Heart } from 'lucide-react';
+import { Minimize2, Play, Pause, SkipBack, SkipForward, RotateCcw, RotateCw, Sparkles, Heart } from 'lucide-react';
 import { Track } from '../types';
 import confetti from 'canvas-confetti';
 
@@ -10,6 +10,11 @@ interface LivingRoomModeProps {
   onNext: () => void;
   onPrev: () => void;
   onClose: () => void;
+  positionSec?: number;
+  durationSec?: number;
+  onSeek?: (pos: number) => void;
+  onFastForward?: () => void;
+  onRewind?: () => void;
   isBlendSession?: boolean;
   blendParticipants?: string[];
 }
@@ -21,10 +26,29 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
   onNext,
   onPrev,
   onClose,
+  positionSec = 0,
+  durationSec,
+  onSeek,
+  onFastForward,
+  onRewind,
   isBlendSession = false,
   blendParticipants = ['You', 'Aarav', 'Maya']
 }) => {
   const [isFavorited, setIsFavorited] = useState(false);
+
+  const formatTime = (secs: number) => {
+    const mins = Math.floor(secs / 60);
+    const remainder = Math.floor(secs % 60);
+    return `${mins}:${remainder < 10 ? '0' : ''}${remainder}`;
+  };
+
+  const totalDuration = (durationSec && durationSec > 0)
+    ? durationSec
+    : (track.durationSec > 0 ? track.durationSec : 30);
+
+  const progressPercent = totalDuration > 0
+    ? Math.min(100, Math.max(0, (positionSec / totalDuration) * 100))
+    : 0;
 
   const sampleLyrics = track.lyrics || [
     "Lost in the resonance of the room,",
@@ -155,27 +179,80 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
       </div>
 
       {/* Bottom Transport Controls */}
-      <div className="flex items-center gap-6 z-10 mb-4">
-        <button
-          onClick={onPrev}
-          className="p-3 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-all"
-        >
-          <SkipBack className="w-6 h-6" />
-        </button>
+      <div className="flex flex-col items-center gap-4 w-full max-w-xl z-10 mb-4 px-4">
+        {/* Scrubber */}
+        {onSeek && (
+          <div className="flex items-center gap-3 w-full">
+            <span className="text-xs font-mono text-[var(--text-muted)] min-w-8 text-right">
+              {formatTime(positionSec)}
+            </span>
+            <div
+              className="flex-1 h-2 bg-[var(--surface-card)] rounded-full relative cursor-pointer overflow-hidden group border border-[var(--border-subtle)]"
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                onSeek(ratio * totalDuration);
+              }}
+            >
+              <div
+                className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-75"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <span className="text-xs font-mono text-[var(--text-muted)] min-w-8">
+              {formatTime(totalDuration)}
+            </span>
+          </div>
+        )}
 
-        <button
-          onClick={onTogglePlay}
-          className="w-14 h-14 rounded-full bg-[var(--accent-primary)] text-[var(--canvas-bg)] flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all"
-        >
-          {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ml-0.5" />}
-        </button>
+        {/* Buttons */}
+        <div className="flex items-center gap-4 md:gap-6">
+          <button
+            onClick={onPrev}
+            className="p-3 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-all"
+            title="Previous Track"
+          >
+            <SkipBack className="w-5 h-5" />
+          </button>
 
-        <button
-          onClick={onNext}
-          className="p-3 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-all"
-        >
-          <SkipForward className="w-6 h-6" />
-        </button>
+          {onRewind && (
+            <button
+              onClick={onRewind}
+              className="p-2.5 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-all flex items-center justify-center gap-0.5"
+              title="Rewind 10 seconds"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span className="text-[10px] font-mono font-bold">10s</span>
+            </button>
+          )}
+
+          <button
+            onClick={onTogglePlay}
+            className="w-14 h-14 rounded-full bg-[var(--accent-primary)] text-[var(--canvas-bg)] flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all"
+            title={isPlaying ? "Pause" : "Play"}
+          >
+            {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ml-0.5" />}
+          </button>
+
+          {onFastForward && (
+            <button
+              onClick={onFastForward}
+              className="p-2.5 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-all flex items-center justify-center gap-0.5"
+              title="Fast Forward 10 seconds"
+            >
+              <span className="text-[10px] font-mono font-bold">10s</span>
+              <RotateCw className="w-4 h-4" />
+            </button>
+          )}
+
+          <button
+            onClick={onNext}
+            className="p-3 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-all"
+            title="Next Track"
+          >
+            <SkipForward className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
     </div>

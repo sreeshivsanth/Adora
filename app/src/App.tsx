@@ -122,6 +122,7 @@ export function App() {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(INITIAL_TRACKS[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [positionSec, setPositionSec] = useState(0);
+  const [durationSec, setDurationSec] = useState(0);
   const [volume, setVolume] = useState(0.85);
 
   // Modals
@@ -189,16 +190,48 @@ export function App() {
     audioRef.current.volume = volume;
   }, [volume]);
 
+  // Clean Audio Source Synchronization (no AbortError race conditions)
   useEffect(() => {
-    if (!audioRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (!currentTrack?.audioUrl) {
+      audio.pause();
+      return;
+    }
+
+    const targetSrc = resolveAudioUrl(currentTrack.audioUrl) || '';
+    if (audio.src !== targetSrc) {
+      audio.src = targetSrc;
+      audio.load();
+      setPositionSec(0);
+    }
+
     if (isPlaying) {
-      audioRef.current.play().catch((err) => {
-        console.warn('Playback gesture required by browser:', err);
+      audio.play().catch((err) => {
+        console.warn('[Adora Playback]', err);
       });
     } else {
-      audioRef.current.pause();
+      audio.pause();
     }
-  }, [isPlaying, currentTrack]);
+  }, [currentTrack, isPlaying]);
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current && Number.isFinite(audioRef.current.duration) && audioRef.current.duration > 0) {
+      setDurationSec(Math.floor(audioRef.current.duration));
+    } else if (currentTrack) {
+      setDurationSec(currentTrack.durationSec || 30);
+    }
+    if (isPlaying && audioRef.current) {
+      audioRef.current.play().catch(e => console.warn('[Adora Playback]', e));
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setPositionSec(Math.floor(audioRef.current.currentTime));
+    }
+  };
 
   // Live Worldwide Music Search (250ms debounce)
   useEffect(() => {
@@ -231,12 +264,6 @@ export function App() {
       .catch(() => {});
   }, [currentUser?.token]);
 
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setPositionSec(Math.floor(audioRef.current.currentTime));
-    }
-  };
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
@@ -244,11 +271,11 @@ export function App() {
 
   // Playback handlers
   const handleTogglePlay = () => {
-    setIsPlaying(!isPlaying);
+    setIsPlaying(prev => !prev);
   };
 
   const handleNext = () => {
-    if (!currentTrack) return;
+    if (!currentTrack || tracks.length === 0) return;
     const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
     const nextIndex = (currentIndex + 1) % tracks.length;
     setCurrentTrack(tracks[nextIndex]);
@@ -257,7 +284,7 @@ export function App() {
   };
 
   const handlePrev = () => {
-    if (!currentTrack) return;
+    if (!currentTrack || tracks.length === 0) return;
     const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
     const prevIndex = (currentIndex - 1 + tracks.length) % tracks.length;
     setCurrentTrack(tracks[prevIndex]);
@@ -266,6 +293,12 @@ export function App() {
   };
 
   const handleSelectTrack = (track: Track) => {
+    // If clicking the song that is already active, toggle play/pause!
+    if (currentTrack?.id === track.id) {
+      setIsPlaying(prev => !prev);
+      return;
+    }
+
     setCurrentTrack(track);
     setIsPlaying(true);
     setPositionSec(0);
@@ -275,18 +308,26 @@ export function App() {
       requestIngest({ title: track.title, artist: track.artist, language: track.language }, currentUser?.token)
         .catch(e => console.warn('[Adora Ingestion Trigger]', e));
     }
-
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(e => console.warn(e));
-    }
   };
 
+  const effectiveDuration = (durationSec && durationSec > 0) ? durationSec : (currentTrack?.durationSec || 30);
+
   const handleSeek = (pos: number) => {
-    setPositionSec(pos);
-    if (audioRef.current) {
-      audioRef.current.currentTime = pos;
-    }
+    if (!audioRef.current) return;
+    const maxDur = effectiveDuration > 0.5 ? effectiveDuration - 0.5 : 0;
+    const clamped = Math.max(0, Math.min(pos, maxDur));
+    audioRef.current.currentTime = clamped;
+    setPositionSec(Math.floor(clamped));
+  };
+
+  const handleFastForward = (seconds: number = 10) => {
+    if (!audioRef.current) return;
+    handleSeek(audioRef.current.currentTime + seconds);
+  };
+
+  const handleRewind = (seconds: number = 10) => {
+    if (!audioRef.current) return;
+    handleSeek(audioRef.current.currentTime - seconds);
   };
 
   // Favorite (Pins track from deletion)
@@ -375,7 +416,7 @@ export function App() {
       {/* Real Audio Player Element */}
       <audio
         ref={audioRef}
-        src={resolveAudioUrl(currentTrack?.audioUrl)}
+        onLoadedMetadata={handleLoadedMetadata}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleNext}
       />
@@ -507,7 +548,10 @@ export function App() {
           onNext={handleNext}
           onPrev={handlePrev}
           positionSec={positionSec}
+          durationSec={durationSec}
           onSeek={handleSeek}
+          onFastForward={() => handleFastForward(10)}
+          onRewind={() => handleRewind(10)}
           volume={volume}
           onVolumeChange={(vol) => setVolume(vol)}
           onOpenLivingRoom={() => setIsLivingRoomOpen(true)}
@@ -525,6 +569,11 @@ export function App() {
           onNext={handleNext}
           onPrev={handlePrev}
           onClose={() => setIsLivingRoomOpen(false)}
+          positionSec={positionSec}
+          durationSec={durationSec}
+          onSeek={handleSeek}
+          onFastForward={() => handleFastForward(10)}
+          onRewind={() => handleRewind(10)}
           isBlendSession={Boolean(blendSession)}
           blendParticipants={blendSession?.participants}
         />

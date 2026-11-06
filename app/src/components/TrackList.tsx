@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, Heart, Download, Check, Globe, ShieldCheck } from 'lucide-react';
+import { Play, Heart, Download, Check, Globe, ShieldCheck } from 'lucide-react';
 import { Track } from '../types';
 
 interface TrackListProps {
@@ -64,21 +64,26 @@ export const TrackList: React.FC<TrackListProps> = ({
             >
               {/* Left Column: Number/Play, Art, Title, Artist */}
               <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                <span className="w-5 text-center text-xs font-mono text-[var(--text-muted)] group-hover:hidden">
-                  {idx + 1}
-                </span>
+                <div className="w-5 flex items-center justify-center flex-shrink-0">
+                  {isThisPlaying ? (
+                    <div className="flex items-end gap-0.5 h-3.5" title="Playing">
+                      <span className="w-1 bg-[var(--accent-primary)] rounded-full animate-pulse h-full" />
+                      <span className="w-1 bg-[var(--accent-primary)] rounded-full animate-pulse delay-75 h-2/3" />
+                      <span className="w-1 bg-[var(--accent-primary)] rounded-full animate-pulse delay-150 h-4/5" />
+                    </div>
+                  ) : isSelected ? (
+                    <Play className="w-3.5 h-3.5 fill-current text-[var(--accent-primary)] ml-0.5" />
+                  ) : (
+                    <>
+                      <span className="text-xs font-mono text-[var(--text-muted)] group-hover:hidden">
+                        {idx + 1}
+                      </span>
+                      <Play className="w-3.5 h-3.5 fill-current text-[var(--accent-primary)] hidden group-hover:block ml-0.5" />
+                    </>
+                  )}
+                </div>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectTrack(track);
-                  }}
-                  className="w-5 hidden group-hover:flex items-center justify-center text-[var(--accent-primary)]"
-                >
-                  {isThisPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
-                </button>
-
-                <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 shadow-sm relative">
+                <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 shadow-sm relative group-hover:scale-105 transition-transform">
                   <img src={track.cover} alt={track.title} className="w-full h-full object-cover" />
                 </div>
 

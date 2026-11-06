@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Maximize2, Download, Check, Sparkles } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, RotateCcw, RotateCw, Volume2, VolumeX, Maximize2, Download, Check, Sparkles } from 'lucide-react';
 import { Track } from '../types';
 
 interface FloatingPlayerProps {
@@ -9,7 +9,10 @@ interface FloatingPlayerProps {
   onNext: () => void;
   onPrev: () => void;
   positionSec: number;
+  durationSec?: number;
   onSeek: (pos: number) => void;
+  onFastForward?: () => void;
+  onRewind?: () => void;
   volume: number;
   onVolumeChange: (vol: number) => void;
   onOpenLivingRoom: () => void;
@@ -24,7 +27,10 @@ export const FloatingPlayer: React.FC<FloatingPlayerProps> = ({
   onNext,
   onPrev,
   positionSec,
+  durationSec,
   onSeek,
+  onFastForward,
+  onRewind,
   volume,
   onVolumeChange,
   onOpenLivingRoom,
@@ -39,8 +45,12 @@ export const FloatingPlayer: React.FC<FloatingPlayerProps> = ({
     return `${mins}:${remainder < 10 ? '0' : ''}${remainder}`;
   };
 
-  const progressPercent = currentTrack.durationSec > 0
-    ? (positionSec / currentTrack.durationSec) * 100
+  const totalDuration = (durationSec && durationSec > 0)
+    ? durationSec
+    : (currentTrack.durationSec > 0 ? currentTrack.durationSec : 30);
+
+  const progressPercent = totalDuration > 0
+    ? Math.min(100, Math.max(0, (positionSec / totalDuration) * 100))
     : 0;
 
   return (
@@ -85,7 +95,7 @@ export const FloatingPlayer: React.FC<FloatingPlayerProps> = ({
           </div>
 
           {/* Center: Tactile Transport Controls */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-3">
             <button
               onClick={onPrev}
               className="p-2 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-all"
@@ -94,13 +104,35 @@ export const FloatingPlayer: React.FC<FloatingPlayerProps> = ({
               <SkipBack className="w-4 h-4" />
             </button>
 
+            {onRewind && (
+              <button
+                onClick={onRewind}
+                className="p-1.5 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-all flex items-center justify-center relative group"
+                title="Rewind 10 seconds"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span className="text-[9px] font-bold ml-0.5 font-mono">10</span>
+              </button>
+            )}
+
             <button
               onClick={onTogglePlay}
-              className="w-11 h-11 rounded-full bg-[var(--accent-primary)] text-[var(--canvas-bg)] flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all"
+              className="w-11 h-11 rounded-full bg-[var(--accent-primary)] text-[var(--canvas-bg)] flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all mx-1"
               title={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
             </button>
+
+            {onFastForward && (
+              <button
+                onClick={onFastForward}
+                className="p-1.5 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-all flex items-center justify-center relative group"
+                title="Fast Forward 10 seconds"
+              >
+                <span className="text-[9px] font-bold mr-0.5 font-mono">10</span>
+                <RotateCw className="w-3.5 h-3.5" />
+              </button>
+            )}
 
             <button
               onClick={onNext}
@@ -163,22 +195,22 @@ export const FloatingPlayer: React.FC<FloatingPlayerProps> = ({
           </span>
           
           <div 
-            className="flex-1 h-1.5 bg-[var(--surface-hover)] rounded-full relative cursor-pointer overflow-hidden group"
+            className="flex-1 h-2 bg-[var(--surface-hover)] rounded-full relative cursor-pointer overflow-hidden group py-0.5"
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               const clickX = e.clientX - rect.left;
-              const ratio = clickX / rect.width;
-              onSeek(ratio * currentTrack.durationSec);
+              const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+              onSeek(ratio * totalDuration);
             }}
           >
             <div 
-              className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-100"
+              className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-75"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
 
           <span className="text-[11px] text-[var(--text-muted)] font-mono min-w-8">
-            {formatTime(currentTrack.durationSec)}
+            {formatTime(totalDuration)}
           </span>
         </div>
 
