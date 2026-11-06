@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, RotateCcw, RotateCw, Volume2, VolumeX, Maximize2, Download, Check, Sparkles } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, RotateCcw, RotateCw, Volume2, VolumeX, Maximize2, Download, Check, Sparkles, ListMusic, FolderPlus } from 'lucide-react';
 import { Track } from '../types';
 
 interface FloatingPlayerProps {
@@ -18,6 +18,9 @@ interface FloatingPlayerProps {
   onOpenLivingRoom: () => void;
   onToggleDownload: (track: Track) => void;
   isBlendSession?: boolean;
+  queueCount?: number;
+  onOpenQueue?: () => void;
+  onAddToPlaylist?: (track: Track) => void;
 }
 
 export const FloatingPlayer: React.FC<FloatingPlayerProps> = ({
@@ -35,7 +38,10 @@ export const FloatingPlayer: React.FC<FloatingPlayerProps> = ({
   onVolumeChange,
   onOpenLivingRoom,
   onToggleDownload,
-  isBlendSession = false
+  isBlendSession = false,
+  queueCount = 0,
+  onOpenQueue,
+  onAddToPlaylist
 }) => {
   if (!currentTrack) return null;
 
@@ -55,7 +61,7 @@ export const FloatingPlayer: React.FC<FloatingPlayerProps> = ({
 
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-4xl z-40 select-none">
-      <div className="glass-panel rounded-3xl px-5 py-3 shadow-2xl flex flex-col gap-2 transition-all">
+      <div className="glass-panel rounded-3xl px-5 py-3 shadow-[0_16px_40px_rgba(0,0,0,0.35)] flex flex-col gap-2 transition-all backdrop-blur-2xl bg-[var(--player-glass)] border border-white/10 dark:border-white/5">
         {/* Top Info Bar & Controls */}
         <div className="flex items-center justify-between gap-4">
           
@@ -143,8 +149,35 @@ export const FloatingPlayer: React.FC<FloatingPlayerProps> = ({
             </button>
           </div>
 
-          {/* Right: Actions & Volume */}
-          <div className="flex items-center gap-3">
+          {/* Right: Actions, Queue, Playlist & Volume */}
+          <div className="flex items-center gap-2 md:gap-3">
+            {/* Queue Drawer Button */}
+            {onOpenQueue && (
+              <button
+                onClick={onOpenQueue}
+                className="p-2 rounded-full relative text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-all"
+                title="View Playback Queue"
+              >
+                <ListMusic className="w-4 h-4" />
+                {queueCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--accent-primary)] text-[var(--canvas-bg)] text-[10px] font-bold flex items-center justify-center shadow-sm">
+                    {queueCount}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {/* Add to Playlist Button */}
+            {onAddToPlaylist && (
+              <button
+                onClick={() => onAddToPlaylist(currentTrack)}
+                className="p-2 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-all"
+                title="Add track to playlist"
+              >
+                <FolderPlus className="w-4 h-4" />
+              </button>
+            )}
+
             {/* Offline Vault Download Button */}
             <button
               onClick={() => onToggleDownload(currentTrack)}

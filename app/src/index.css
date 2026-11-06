@@ -10,7 +10,7 @@
     --text-primary: #22241F;
     --text-muted: #6B7065;
     --border-subtle: rgba(79, 105, 76, 0.12);
-    --player-glass: rgba(239, 236, 227, 0.85);
+    --player-glass: rgba(239, 236, 227, 0.62);
   }
 
   .dark {
@@ -22,7 +22,7 @@
     --text-primary: #FFFFE7;
     --text-muted: #9DA496;
     --border-subtle: rgba(255, 255, 231, 0.08);
-    --player-glass: rgba(27, 34, 26, 0.85);
+    --player-glass: rgba(18, 22, 18, 0.58);
   }
 
   body {
@@ -51,12 +51,13 @@
   background: var(--accent-primary);
 }
 
-/* Glassmorphism helpers */
+/* Glassmorphism helpers with high-fidelity frosted transparency */
 .glass-panel {
   background-color: var(--player-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
   border: 1px solid var(--border-subtle);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 /* Vinyl rotation animation */

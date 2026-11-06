@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { ZenNavRail } from './components/ZenNavRail';
 import { TopHeader } from './components/TopHeader';
 import { FloatingPlayer } from './components/FloatingPlayer';
@@ -7,113 +7,146 @@ import { BlendLoungeModal } from './components/BlendLoungeModal';
 import { AdminStudioModal } from './components/AdminStudioModal';
 import { AuthModal } from './components/AuthModal';
 import { TrackList } from './components/TrackList';
-import { Track, User, Device, BlendSession, AdminMetrics } from './types';
-import { Sparkles, Radio, CheckCircle, ShieldCheck } from 'lucide-react';
-import { searchTracks, requestIngest, fetchLocalTracks, resolveAudioUrl } from './services/api';
+import { QueueDrawer } from './components/QueueDrawer';
+import { CreatePlaylistModal } from './components/CreatePlaylistModal';
+import { AddToPlaylistModal } from './components/AddToPlaylistModal';
+import { PlaylistDetailView } from './components/PlaylistDetailView';
+import { UserSettingsModal } from './components/UserSettingsModal';
+import { OnboardingModal } from './components/OnboardingModal';
+import { Track, User, Device, BlendSession, AdminMetrics, Playlist, UserPreferences } from './types';
+import { Sparkles, Radio, CheckCircle, ShieldCheck, Flame, History, FolderPlus, Play, Plus, Music, Disc3, Clock } from 'lucide-react';
+import { searchTracks, requestIngest, fetchLocalTracks, resolveAudioUrl, fetchUserPreferences, saveUserPreferences, fetchUserPlaylists, saveUserPlaylists } from './services/api';
 
 const INITIAL_TRACKS: Track[] = [
   {
-    id: 'trk_1',
+    id: 'itunes_1502476579',
+    title: 'Vaathi Coming',
+    artist: 'Anirudh Ravichander & Gana Balachandar',
+    album: 'Master',
+    language: 'tamil',
+    durationSec: 230,
+    cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600',
+    audioUrl: '/api/stream/full?title=Vaathi+Coming&artist=Anirudh+Ravichander',
+    isLocal: false,
+    releaseYear: 2021,
+    mood: 'energetic',
+    genre: 'Soundtrack',
+    isStarred: true
+  },
+  {
+    id: 'itunes_1556858076',
+    title: 'Enjoy Enjaami',
+    artist: 'Dhee, Arivu & Santhosh Narayanan',
+    album: 'Enjoy Enjaami - Single',
+    language: 'tamil',
+    durationSec: 302,
+    cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600',
+    audioUrl: '/api/stream/full?title=Enjoy+Enjaami&artist=Dhee+Arivu',
+    isLocal: false,
+    releaseYear: 2021,
+    mood: 'chill',
+    genre: 'Indie'
+  },
+  {
+    id: 'itunes_1583726481',
     title: 'Adiye',
-    artist: 'Dhibu Ninan Thomas, Kapil Kapilan',
+    artist: 'Dhibu Ninan Thomas & Kapil Kapilan',
     album: 'Bachelor',
     language: 'tamil',
-    durationSec: 372,
-    cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    isLocal: true,
-    isStarred: true,
-    isDownloaded: true,
-    lyrics: [
-      "Adiye en aada thozhiye,",
-      "Nee illaatha podhilaum un ninaive.",
-      "Acoustic strings echoing through the night,",
-      "Warm vinyl resonance holding every breath,",
-      "In the gentle quiet of the room."
-    ]
+    durationSec: 254,
+    cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600',
+    audioUrl: '/api/stream/full?title=Adiye&artist=Dhibu+Ninan+Thomas',
+    isLocal: false,
+    releaseYear: 2021,
+    mood: 'romantic',
+    genre: 'Soundtrack'
   },
   {
-    id: 'trk_2',
+    id: 'itunes_1634938221',
     title: 'Kesariya',
-    artist: 'Arijit Singh, Pritam',
+    artist: 'Pritam, Arijit Singh & Amitabh Bhattacharya',
     album: 'Brahmastra',
     language: 'hindi',
-    durationSec: 425,
-    cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-    isLocal: true,
-    isStarred: true,
-    isDownloaded: false,
-    lyrics: [
-      "Kesariya tera ishq hai piya,",
-      "Rang jaaun jo main haath lagaun.",
-      "Din beete saare teri fikr mein,",
-      "Rain saari teri khair manaun."
-    ]
+    durationSec: 268,
+    cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600',
+    audioUrl: '/api/stream/full?title=Kesariya&artist=Arijit+Singh',
+    isLocal: false,
+    releaseYear: 2022,
+    mood: 'romantic',
+    genre: 'Bollywood',
+    isStarred: true
   },
   {
-    id: 'trk_3',
+    id: 'itunes_1440857781',
     title: 'Midnight City',
     artist: 'M83',
     album: "Hurry Up, We're Dreaming",
     language: 'english',
-    durationSec: 344,
-    cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-    isLocal: true,
-    isStarred: false,
-    isDownloaded: true,
-    lyrics: [
-      "Waiting in a car,",
-      "Waiting for a ride in the dark.",
-      "The city is my church,",
-      "It wraps me in the blinding twilight."
-    ]
+    durationSec: 243,
+    cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600',
+    audioUrl: '/api/stream/full?title=Midnight+City&artist=M83',
+    isLocal: false,
+    releaseYear: 2011,
+    mood: 'focus',
+    genre: 'Electronic'
   },
   {
-    id: 'trk_4',
+    id: 'itunes_1440833249',
+    title: 'Blinding Lights',
+    artist: 'The Weeknd',
+    album: 'After Hours',
+    language: 'english',
+    durationSec: 200,
+    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600',
+    audioUrl: '/api/stream/full?title=Blinding+Lights&artist=The+Weeknd',
+    isLocal: false,
+    releaseYear: 2019,
+    mood: 'energetic',
+    genre: 'Pop'
+  },
+  {
+    id: 'itunes_1660603593',
     title: 'Ditto',
     artist: 'NewJeans',
-    album: 'OMG',
+    album: "NewJeans 'OMG'",
     language: 'korean',
     durationSec: 185,
-    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
-    isLocal: true,
-    isStarred: false,
-    isDownloaded: false,
-    lyrics: [
-      "Stay in the middle,",
-      "Like you a little, don't want no riddle.",
-      "Say it back, oh say it ditto,",
-      "Soft acoustic melodies floating away."
-    ]
-  },
-  {
-    id: 'trk_5',
-    title: 'Enjoy Enjaami',
-    artist: 'Dhee, Arivu, Santhosh Narayanan',
-    album: 'Independent Single',
-    language: 'tamil',
-    durationSec: 302,
-    cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3',
-    isLocal: false, // Discovered on-demand online!
-    isStarred: false,
-    isDownloaded: false,
-    lyrics: [
-      "Cuckoo cuckoo kaathodu thaalelo,",
-      "Kombu thean poovodu thenalo.",
-      "Earthly roots, heritage voices,",
-      "Singing for the soil and ancestors."
-    ]
+    cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600',
+    audioUrl: '/api/stream/full?title=Ditto&artist=NewJeans',
+    isLocal: false,
+    releaseYear: 2022,
+    mood: 'chill',
+    genre: 'K-Pop'
   }
 ];
 
-export function App() {
+const DEFAULT_PLAYLISTS: Playlist[] = [
+  {
+    id: 'pl_favorites',
+    name: 'Sanctuary Favorites',
+    description: 'Hand-picked songs immune from LRU cloud pruning',
+    coverUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600',
+    trackIds: ['itunes_1502476579', 'itunes_1634938221'],
+    createdAt: Date.now() - 86400000 * 2,
+    updatedAt: Date.now()
+  },
+  {
+    id: 'pl_chill',
+    name: 'Late Night Flow',
+    description: 'Acoustic & lo-fi calm for study and relaxation',
+    coverUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600',
+    trackIds: ['itunes_1556858076', 'itunes_1440857781', 'itunes_1660603593'],
+    createdAt: Date.now() - 86400000 * 5,
+    updatedAt: Date.now()
+  }
+];
+
+export default function App() {
   const [darkMode, setDarkMode] = useState(true);
   const [currentTab, setCurrentTab] = useState<'studio' | 'vault' | 'blend' | 'admin'>('studio');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
+  const [selectedMood, setSelectedMood] = useState<string>('all');
+  const [selectedYearRange, setSelectedYearRange] = useState<{ min: number; max: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Audio State & Real HTML5 Audio Element
@@ -125,11 +158,58 @@ export function App() {
   const [durationSec, setDurationSec] = useState(0);
   const [volume, setVolume] = useState(0.85);
 
+  // Queue System
+  const [queue, setQueue] = useState<Track[]>([]);
+  const [isQueueOpen, setIsQueueOpen] = useState(false);
+
+  // Playlists System
+  const [playlists, setPlaylists] = useState<Playlist[]>(() => {
+    try {
+      const saved = localStorage.getItem('adora_user_playlists');
+      return saved ? JSON.parse(saved) : DEFAULT_PLAYLISTS;
+    } catch {
+      return DEFAULT_PLAYLISTS;
+    }
+  });
+  const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
+  const [isCreatePlaylistOpen, setIsCreatePlaylistOpen] = useState(false);
+  const [playlistTrackToAdd, setPlaylistTrackToAdd] = useState<Track | null>(null);
+
+  // Recently Played
+  const [recentlyPlayed, setRecentlyPlayed] = useState<Track[]>(() => {
+    try {
+      const saved = localStorage.getItem('adora_recently_played');
+      return saved ? JSON.parse(saved) : [INITIAL_TRACKS[0], INITIAL_TRACKS[1]];
+    } catch {
+      return [INITIAL_TRACKS[0], INITIAL_TRACKS[1]];
+    }
+  });
+
+  // User Preferences & First-Time Onboarding
+  const [userPreferences, setUserPreferences] = useState<UserPreferences>(() => {
+    try {
+      const saved = localStorage.getItem('adora_user_prefs');
+      return saved ? JSON.parse(saved) : {
+        preferredLanguages: ['tamil', 'hindi', 'english'],
+        favoriteArtists: ['A.R. Rahman', 'Anirudh Ravichander', 'Arijit Singh'],
+        onboardingCompleted: false
+      };
+    } catch {
+      return {
+        preferredLanguages: ['tamil', 'hindi', 'english'],
+        favoriteArtists: ['A.R. Rahman', 'Anirudh Ravichander', 'Arijit Singh'],
+        onboardingCompleted: false
+      };
+    }
+  });
+
   // Modals
   const [isLivingRoomOpen, setIsLivingRoomOpen] = useState(false);
   const [isBlendModalOpen, setIsBlendModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(() => !userPreferences.onboardingCompleted);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Auth & Devices
@@ -184,13 +264,63 @@ export function App() {
     }
   }, [darkMode]);
 
+  // Save Playlists to LocalStorage & Server
+  useEffect(() => {
+    try {
+      localStorage.setItem('adora_user_playlists', JSON.stringify(playlists));
+      saveUserPlaylists(playlists, currentUser?.token).catch(() => {});
+    } catch {}
+  }, [playlists, currentUser?.token]);
+
+  // Save Recently Played
+  useEffect(() => {
+    try {
+      localStorage.setItem('adora_recently_played', JSON.stringify(recentlyPlayed));
+    } catch {}
+  }, [recentlyPlayed]);
+
+  // Save Preferences
+  const handleSavePreferences = (newPrefs: UserPreferences) => {
+    setUserPreferences(newPrefs);
+    try {
+      localStorage.setItem('adora_user_prefs', JSON.stringify(newPrefs));
+      saveUserPreferences(newPrefs, currentUser?.token).catch(() => {});
+    } catch {}
+    setIsOnboardingOpen(false);
+    showToast('Preferences updated! Your feed is tailored.');
+  };
+
+  // Sync Preferences & Playlists from Server on login
+  useEffect(() => {
+    if (currentUser?.token) {
+      fetchUserPreferences(currentUser.token)
+        .then(res => {
+          if (res?.preferences) {
+            setUserPreferences(res.preferences);
+            if (!res.preferences.onboardingCompleted) {
+              setIsOnboardingOpen(true);
+            }
+          }
+        })
+        .catch(() => {});
+
+      fetchUserPlaylists(currentUser.token)
+        .then(res => {
+          if (res?.playlists && Array.isArray(res.playlists) && res.playlists.length > 0) {
+            setPlaylists(res.playlists);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [currentUser]);
+
   // Audio Playback Synchronization with HTML5 Audio Element
   useEffect(() => {
     if (!audioRef.current) return;
     audioRef.current.volume = volume;
   }, [volume]);
 
-  // Clean Audio Source Synchronization (no AbortError race conditions)
+  // Clean Audio Source Synchronization
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -237,7 +367,13 @@ export function App() {
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
-        const data = await searchTracks(searchQuery, selectedLanguage, currentUser?.token);
+        const queryTerm = searchQuery.trim();
+        // If mood is selected and query is active, append mood for richer search
+        const fullQuery = (selectedMood !== 'all' && queryTerm)
+          ? `${queryTerm} ${selectedMood}`
+          : queryTerm;
+
+        const data = await searchTracks(fullQuery, selectedLanguage, currentUser?.token);
         if (data && Array.isArray(data.results)) {
           setTracks(data.results);
         }
@@ -247,7 +383,7 @@ export function App() {
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, selectedLanguage, currentUser?.token]);
+  }, [searchQuery, selectedLanguage, selectedMood, currentUser?.token]);
 
   // Initial load: Fetch local downloaded library from server
   useEffect(() => {
@@ -274,40 +410,173 @@ export function App() {
     setIsPlaying(prev => !prev);
   };
 
+  // -------------------------------------------------------------
+  // Smart Autoplay Algorithm: Determines upcoming track based on mood & taste
+  // -------------------------------------------------------------
+  const upcomingAutoplayTrack = useMemo<Track | null>(() => {
+    if (!currentTrack || tracks.length === 0) return null;
+
+    const currentMood = (currentTrack.mood || 'chill').toLowerCase();
+    const currentArtist = currentTrack.artist.toLowerCase();
+    const currentLang = currentTrack.language.toLowerCase();
+
+    // 1. First priority: match exact mood and user preferred languages/artists
+    const candidates = tracks.filter(t => t.id !== currentTrack.id);
+
+    // Try matching mood + language
+    const moodMatches = candidates.filter(t => 
+      t.mood && t.mood.toLowerCase() === currentMood &&
+      (userPreferences.preferredLanguages.includes(t.language) || t.language === currentLang)
+    );
+    if (moodMatches.length > 0) {
+      return moodMatches[Math.floor(Math.random() * moodMatches.length)];
+    }
+
+    // Try matching same artist or same language
+    const artistMatches = candidates.filter(t => 
+      t.artist.toLowerCase().includes(currentArtist) || currentArtist.includes(t.artist.toLowerCase())
+    );
+    if (artistMatches.length > 0) {
+      return artistMatches[0];
+    }
+
+    // Fallback to any different track in catalog
+    return candidates[0] || null;
+  }, [currentTrack, tracks, userPreferences]);
+
+  // Song transition (Queue -> Smart Autoplay -> Sequential)
   const handleNext = () => {
+    if (queue.length > 0) {
+      const [nextQueued, ...restQueue] = queue;
+      setQueue(restQueue);
+      playSongWithHistory(nextQueued);
+      showToast(`Playing from Queue: ${nextQueued.title}`);
+      return;
+    }
+
+    if (upcomingAutoplayTrack) {
+      playSongWithHistory(upcomingAutoplayTrack);
+      showToast(`Smart Autoplay: ${upcomingAutoplayTrack.title} (${upcomingAutoplayTrack.mood || 'Mood Match'})`);
+      return;
+    }
+
     if (!currentTrack || tracks.length === 0) return;
     const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
     const nextIndex = (currentIndex + 1) % tracks.length;
-    setCurrentTrack(tracks[nextIndex]);
-    setPositionSec(0);
-    setIsPlaying(true);
+    playSongWithHistory(tracks[nextIndex]);
   };
 
   const handlePrev = () => {
     if (!currentTrack || tracks.length === 0) return;
     const currentIndex = tracks.findIndex(t => t.id === currentTrack.id);
     const prevIndex = (currentIndex - 1 + tracks.length) % tracks.length;
-    setCurrentTrack(tracks[prevIndex]);
-    setPositionSec(0);
-    setIsPlaying(true);
+    playSongWithHistory(tracks[prevIndex]);
   };
 
-  const handleSelectTrack = (track: Track) => {
-    // If clicking the song that is already active, toggle play/pause!
-    if (currentTrack?.id === track.id) {
-      setIsPlaying(prev => !prev);
-      return;
-    }
-
+  const playSongWithHistory = (track: Track) => {
     setCurrentTrack(track);
     setIsPlaying(true);
     setPositionSec(0);
+
+    // Add to Recently Played (max 15 unique)
+    setRecentlyPlayed(prev => {
+      const filtered = prev.filter(t => t.id !== track.id);
+      return [track, ...filtered].slice(0, 15);
+    });
 
     // If online track, trigger on-demand JIT ingestion in background
     if (!track.isLocal) {
       requestIngest({ title: track.title, artist: track.artist, language: track.language }, currentUser?.token)
         .catch(e => console.warn('[Adora Ingestion Trigger]', e));
     }
+  };
+
+  const handleSelectTrack = (track: Track) => {
+    if (currentTrack?.id === track.id) {
+      setIsPlaying(prev => !prev);
+      return;
+    }
+    playSongWithHistory(track);
+  };
+
+  // Queue Operations
+  const handleAddToQueue = (track: Track) => {
+    setQueue(prev => [...prev, track]);
+    showToast(`Added "${track.title}" to Queue`);
+  };
+
+  const handleRemoveFromQueue = (index: number) => {
+    setQueue(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleClearQueue = () => {
+    setQueue([]);
+    showToast('Queue cleared');
+  };
+
+  // Playlist Operations
+  const handleCreatePlaylist = (newPl: Playlist) => {
+    setPlaylists(prev => [newPl, ...prev]);
+    showToast(`Created playlist "${newPl.name}"`);
+  };
+
+  const handleDeletePlaylist = (playlistId: string) => {
+    setPlaylists(prev => prev.filter(p => p.id !== playlistId));
+    if (activePlaylistId === playlistId) {
+      setActivePlaylistId(null);
+    }
+    showToast('Playlist deleted');
+  };
+
+  const handleToggleTrackInPlaylist = (playlistId: string, trackId: string) => {
+    setPlaylists(prev => prev.map(p => {
+      if (p.id === playlistId) {
+        const hasTrack = p.trackIds.includes(trackId);
+        const updatedTrackIds = hasTrack
+          ? p.trackIds.filter(id => id !== trackId)
+          : [...p.trackIds, trackId];
+        showToast(hasTrack ? 'Removed from playlist' : 'Added to playlist');
+        return { ...p, trackIds: updatedTrackIds, updatedAt: Date.now() };
+      }
+      return p;
+    }));
+  };
+
+  const handleRemoveTrackFromPlaylist = (playlistId: string, trackId: string) => {
+    setPlaylists(prev => prev.map(p => {
+      if (p.id === playlistId) {
+        return { ...p, trackIds: p.trackIds.filter(id => id !== trackId), updatedAt: Date.now() };
+      }
+      return p;
+    }));
+    showToast('Track removed from playlist');
+  };
+
+  const handlePlayPlaylist = (playlistTracks: Track[]) => {
+    if (playlistTracks.length === 0) return;
+    const [first, ...rest] = playlistTracks;
+    playSongWithHistory(first);
+    setQueue(rest);
+    showToast(`Playing playlist (${playlistTracks.length} tracks queued)`);
+  };
+
+  const handleShufflePlaylist = (playlistTracks: Track[]) => {
+    if (playlistTracks.length === 0) return;
+    const shuffled = [...playlistTracks].sort(() => Math.random() - 0.5);
+    const [first, ...rest] = shuffled;
+    playSongWithHistory(first);
+    setQueue(rest);
+    showToast(`Shuffled playlist (${playlistTracks.length} tracks)`);
+  };
+
+  // Logo Click / Home Handler: Clears all filters and returns to Home pure view
+  const handleGoHome = () => {
+    setCurrentTab('studio');
+    setActivePlaylistId(null);
+    setSearchQuery('');
+    setSelectedMood('all');
+    setSelectedYearRange(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const effectiveDuration = (durationSec && durationSec > 0) ? durationSec : (currentTrack?.durationSec || 30);
@@ -393,23 +662,54 @@ export function App() {
     showToast('Left Blend room');
   };
 
-  // Filtered tracks
-  const filteredTracks = tracks.filter(t => {
-    if (currentTab === 'vault') {
-      const matchesQuery = !searchQuery || 
-        t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        t.artist.toLowerCase().includes(searchQuery.toLowerCase());
-      return (t.isStarred || t.isDownloaded) && matchesQuery;
-    }
+  // Filtered tracks with Mood, Language, and Release Year Range support
+  const filteredTracks = useMemo(() => {
+    return tracks.filter(t => {
+      // 1. Vault tab filter
+      if (currentTab === 'vault') {
+        const matchesQuery = !searchQuery || 
+          t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+          t.artist.toLowerCase().includes(searchQuery.toLowerCase());
+        return (t.isStarred || t.isDownloaded) && matchesQuery;
+      }
 
-    // When an online search is active, the results are already resolved by the search engine
-    if (searchQuery.trim()) {
+      // 2. Language filter
+      if (selectedLanguage !== 'all' && t.language !== selectedLanguage) {
+        return false;
+      }
+
+      // 3. Mood filter
+      if (selectedMood !== 'all') {
+        const songMood = (t.mood || '').toLowerCase();
+        if (songMood && songMood !== selectedMood.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 4. Release Year Range filter
+      if (selectedYearRange && t.releaseYear) {
+        if (t.releaseYear < selectedYearRange.min || t.releaseYear > selectedYearRange.max) {
+          return false;
+        }
+      }
+
       return true;
-    }
+    });
+  }, [tracks, currentTab, searchQuery, selectedLanguage, selectedMood, selectedYearRange]);
 
-    // Curated ambient browsing filtered by language
-    return selectedLanguage === 'all' || t.language === selectedLanguage;
-  });
+  // Active playlist resolution if user clicked a playlist
+  const activePlaylist = useMemo(() => {
+    if (!activePlaylistId) return null;
+    return playlists.find(p => p.id === activePlaylistId) || null;
+  }, [activePlaylistId, playlists]);
+
+  // Trending tracks based on user preferences and popular seed list
+  const trendingTracks = useMemo(() => {
+    return tracks.filter(t => 
+      userPreferences.preferredLanguages.includes(t.language) ||
+      userPreferences.favoriteArtists.some(a => t.artist.toLowerCase().includes(a.toLowerCase()))
+    ).slice(0, 6);
+  }, [tracks, userPreferences]);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[var(--canvas-bg)] text-[var(--text-primary)]">
@@ -428,7 +728,7 @@ export function App() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full glass-panel shadow-xl text-xs font-semibold flex items-center gap-2 border border-[var(--border-subtle)]">
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full glass-panel shadow-xl text-xs font-semibold flex items-center gap-2 border border-[var(--border-subtle)] animate-fadeIn">
           <CheckCircle className="w-4 h-4 text-emerald-500" />
           <span>{toastMessage}</span>
         </div>
@@ -440,112 +740,319 @@ export function App() {
         setCurrentTab={(tab) => {
           if (tab === 'blend') setIsBlendModalOpen(true);
           else if (tab === 'admin') setIsAdminModalOpen(true);
-          else setCurrentTab(tab);
+          else {
+            setActivePlaylistId(null);
+            setCurrentTab(tab);
+          }
         }}
+        onGoHome={handleGoHome}
         darkMode={darkMode}
         setDarkMode={setDarkMode}
         currentUser={currentUser}
         onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       {/* Main Sanctuary Area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        {/* 2. Top Header */}
+        {/* 2. Top Header with Search, Mood & Year Range Filters */}
         <TopHeader
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           selectedLanguage={selectedLanguage}
           setSelectedLanguage={setSelectedLanguage}
+          selectedMood={selectedMood}
+          setSelectedMood={setSelectedMood}
+          selectedYearRange={selectedYearRange}
+          setSelectedYearRange={setSelectedYearRange}
           activeDevice={activeDevice}
           onOpenDevicePicker={() => {
             showToast('Adora Connect: Switched playback between Phone & Desktop');
           }}
           currentUser={currentUser}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         />
 
         {/* 3. Main Body Content */}
         <main className="flex-1 overflow-y-auto px-6 pt-2 pb-32 flex flex-col gap-8 max-w-6xl w-full mx-auto">
           
-          {/* Hero Banner: Current Track Showcase */}
-          {currentTrack && (
-            <div className="relative rounded-3xl overflow-hidden p-6 md:p-8 bg-[var(--surface-card)] border border-[var(--border-subtle)] flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
-              <div className="flex items-center gap-6">
-                <div 
-                  className="w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden shadow-lg flex-shrink-0 cursor-pointer group"
-                  onClick={() => setIsLivingRoomOpen(true)}
-                  title="Open Living Room Mode"
-                >
-                  <img src={currentTrack.cover} alt={currentTrack.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                </div>
+          {/* VIEW A: Active Playlist View (When clicked from Home) */}
+          {activePlaylist ? (
+            <PlaylistDetailView
+              playlist={activePlaylist}
+              allTracks={tracks}
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+              onPlayTrack={handleSelectTrack}
+              onPlayAll={handlePlayPlaylist}
+              onShufflePlay={handleShufflePlaylist}
+              onBack={() => setActivePlaylistId(null)}
+              onDeletePlaylist={handleDeletePlaylist}
+              onRemoveTrackFromPlaylist={handleRemoveTrackFromPlaylist}
+              onToggleFavorite={handleToggleFavorite}
+              onToggleDownload={handleToggleDownload}
+              onAddToQueue={handleAddToQueue}
+            />
+          ) : (
+            <>
+              {/* VIEW B: Normal Home Discovery Feed */}
 
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-[var(--accent-primary)]">
-                      {currentTrack.language} • {currentTrack.isLocal ? 'High-Res Audio' : 'Instant Online Discovery'}
-                    </span>
-                    {blendSession && (
-                      <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold">
-                        <Radio className="w-3 h-3 animate-pulse" />
-                        Blend Room {blendSession.roomId}
-                      </span>
-                    )}
-                  </div>
-                  <h1 className="text-2xl md:text-3xl font-serif font-bold text-[var(--text-primary)]">
-                    {currentTrack.title}
-                  </h1>
-                  <p className="text-sm text-[var(--text-muted)] font-medium">
-                    {currentTrack.artist} — {currentTrack.album}
-                  </p>
-
-                  <div className="flex items-center gap-3 mt-3">
-                    <button
-                      onClick={handleTogglePlay}
-                      className="px-5 py-2 rounded-full bg-[var(--accent-primary)] text-[var(--canvas-bg)] text-xs font-semibold shadow-md hover:scale-105 transition-transform"
-                    >
-                      {isPlaying ? 'Pause' : 'Play Now'}
-                    </button>
-                    <button
+              {/* Hero Banner: Current Track Showcase */}
+              {currentTrack && (
+                <div className="relative rounded-3xl overflow-hidden p-6 md:p-8 bg-[var(--surface-card)] border border-[var(--border-subtle)] flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+                  <div className="flex items-center gap-6">
+                    <div 
+                      className="w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden shadow-lg flex-shrink-0 cursor-pointer group"
                       onClick={() => setIsLivingRoomOpen(true)}
-                      className="px-4 py-2 rounded-full bg-[var(--surface-hover)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--border-subtle)] transition-colors flex items-center gap-1.5"
+                      title="Open Living Room Mode"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
-                      Living Room Mode
-                    </button>
+                      <img src={currentTrack.cover} alt={currentTrack.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold uppercase tracking-widest text-[var(--accent-primary)]">
+                          {currentTrack.language} • {currentTrack.isLocal ? 'High-Res Audio' : 'Instant Online Discovery'}
+                          {currentTrack.releaseYear && ` • ${currentTrack.releaseYear}`}
+                        </span>
+                        {blendSession && (
+                          <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold">
+                            <Radio className="w-3 h-3 animate-pulse" />
+                            Blend Room {blendSession.roomId}
+                          </span>
+                        )}
+                      </div>
+                      <h1 className="text-2xl md:text-3xl font-serif font-bold text-[var(--text-primary)]">
+                        {currentTrack.title}
+                      </h1>
+                      <p className="text-sm text-[var(--text-muted)] font-medium">
+                        {currentTrack.artist} — {currentTrack.album}
+                      </p>
+
+                      <div className="flex items-center gap-3 mt-3">
+                        <button
+                          onClick={handleTogglePlay}
+                          className="px-5 py-2 rounded-full bg-[var(--accent-primary)] text-[var(--canvas-bg)] text-xs font-semibold shadow-md hover:scale-105 transition-transform flex items-center gap-1.5"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                          {isPlaying ? 'Pause' : 'Play Now'}
+                        </button>
+                        <button
+                          onClick={() => handleAddToQueue(currentTrack)}
+                          className="px-4 py-2 rounded-full bg-[var(--surface-hover)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--border-subtle)] transition-colors"
+                        >
+                          Add to Queue
+                        </button>
+                        <button
+                          onClick={() => setIsLivingRoomOpen(true)}
+                          className="px-4 py-2 rounded-full bg-[var(--surface-hover)] text-[var(--text-primary)] text-xs font-medium hover:bg-[var(--border-subtle)] transition-colors flex items-center gap-1.5"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+                          Living Room
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status Badge */}
+                  <div className="hidden lg:flex flex-col items-end text-right gap-1 text-xs text-[var(--text-muted)]">
+                    <span className="flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400">
+                      <ShieldCheck className="w-4 h-4" />
+                      Pruning Protection Active
+                    </span>
+                    <span>Cloudflare Edge • Secure Vault</span>
+                    <span>Zero Ads • 100% Free Full Audio</span>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Status Badge */}
-              <div className="hidden lg:flex flex-col items-end text-right gap-1 text-xs text-[var(--text-muted)]">
-                <span className="flex items-center gap-1.5 font-semibold text-emerald-600 dark:text-emerald-400">
-                  <ShieldCheck className="w-4 h-4" />
-                  Pruning Protection Active
-                </span>
-                <span>Cloudflare Edge • Secure Vault</span>
-                <span>Zero Ads • Lossless Audio</span>
-              </div>
-            </div>
+              {/* HOME SECTION 1: User Playlists Showcase (Cards with details) */}
+              {!searchQuery && currentTab === 'studio' && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xl font-bold font-serif text-[var(--text-primary)] tracking-tight">
+                        Your Playlists
+                      </h3>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        Curated playlists for any mood or journey
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setIsCreatePlaylistOpen(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--accent-primary)] text-[var(--canvas-bg)] text-xs font-semibold shadow-sm hover:scale-105 transition-transform"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Create Playlist
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {playlists.map((pl) => (
+                      <div
+                        key={pl.id}
+                        onClick={() => setActivePlaylistId(pl.id)}
+                        className="group relative rounded-2xl p-3.5 bg-[var(--surface-card)] hover:bg-[var(--surface-hover)] border border-[var(--border-subtle)] hover:border-[var(--accent-primary)]/40 transition-all cursor-pointer shadow-sm flex flex-col gap-3"
+                      >
+                        <div className="w-full aspect-square rounded-xl overflow-hidden relative shadow-md">
+                          {pl.coverUrl ? (
+                            <img src={pl.coverUrl} alt={pl.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          ) : (
+                            <div className="w-full h-full bg-[var(--surface-hover)] flex items-center justify-center text-[var(--text-muted)]">
+                              <Music className="w-8 h-8" />
+                            </div>
+                          )}
+
+                          {/* Quick Play Floating Action */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const plTracks = pl.trackIds.map(id => tracks.find(t => t.id === id)).filter((t): t is Track => Boolean(t));
+                              handlePlayPlaylist(plTracks);
+                            }}
+                            className="absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full bg-[var(--accent-primary)] text-[var(--canvas-bg)] flex items-center justify-center opacity-0 group-hover:opacity-100 shadow-lg hover:scale-110 active:scale-95 transition-all"
+                            title="Play playlist"
+                          >
+                            <Play className="w-4 h-4 fill-current ml-0.5" />
+                          </button>
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-bold text-[var(--text-primary)] truncate group-hover:text-[var(--accent-primary)]">
+                            {pl.name}
+                          </h4>
+                          <p className="text-xs text-[var(--text-muted)] line-clamp-1 mt-0.5">
+                            {pl.description || `${pl.trackIds.length} tracks`}
+                          </p>
+                          <span className="text-[11px] font-mono text-[var(--text-muted)] mt-1 block">
+                            {pl.trackIds.length} tracks
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Create New Playlist Card */}
+                    <div
+                      onClick={() => setIsCreatePlaylistOpen(true)}
+                      className="rounded-2xl p-4 border border-dashed border-[var(--border-subtle)] hover:border-[var(--accent-primary)] bg-[var(--surface-card)]/40 hover:bg-[var(--accent-primary)]/5 transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-2 min-h-48"
+                    >
+                      <div className="p-3 rounded-full bg-[var(--surface-hover)] text-[var(--accent-primary)]">
+                        <FolderPlus className="w-5 h-5" />
+                      </div>
+                      <span className="text-xs font-bold text-[var(--text-primary)]">New Playlist</span>
+                      <span className="text-[11px] text-[var(--text-muted)]">Create your own collection</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* HOME SECTION 2: Recently Played / Heard */}
+              {!searchQuery && currentTab === 'studio' && recentlyPlayed.length > 0 && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <History className="w-4 h-4 text-[var(--accent-primary)]" />
+                    <h3 className="text-base font-bold font-serif text-[var(--text-primary)]">
+                      Recently Heard
+                    </h3>
+                  </div>
+
+                  <div className="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar">
+                    {recentlyPlayed.map((track) => (
+                      <div
+                        key={`recent_${track.id}`}
+                        onClick={() => handleSelectTrack(track)}
+                        className="flex-shrink-0 w-44 p-2.5 rounded-2xl bg-[var(--surface-card)] hover:bg-[var(--surface-hover)] border border-[var(--border-subtle)] transition-all cursor-pointer group flex flex-col gap-2"
+                      >
+                        <div className="w-full h-28 rounded-xl overflow-hidden relative shadow-sm">
+                          <img src={track.cover} alt={track.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <div className="w-8 h-8 rounded-full bg-[var(--accent-primary)] text-white flex items-center justify-center shadow-md">
+                              <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <h5 className="text-xs font-bold text-[var(--text-primary)] truncate">{track.title}</h5>
+                          <p className="text-[11px] text-[var(--text-muted)] truncate">{track.artist}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* HOME SECTION 3: Trending Now (Based on user taste) */}
+              {!searchQuery && currentTab === 'studio' && trendingTracks.length > 0 && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Flame className="w-4 h-4 text-amber-500" />
+                      <h3 className="text-base font-bold font-serif text-[var(--text-primary)]">
+                        Trending For You
+                      </h3>
+                    </div>
+                    <span className="text-[11px] text-[var(--text-muted)]">
+                      Tuned to {userPreferences.preferredLanguages.join(', ')}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                    {trendingTracks.map((track) => (
+                      <div
+                        key={`trend_${track.id}`}
+                        onClick={() => handleSelectTrack(track)}
+                        className="p-2.5 rounded-2xl bg-[var(--surface-card)] hover:bg-[var(--surface-hover)] border border-[var(--border-subtle)] flex items-center justify-between gap-3 cursor-pointer group transition-all"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-11 h-11 rounded-xl overflow-hidden shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform">
+                            <img src={track.cover} alt={track.title} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="min-w-0">
+                            <h5 className="text-xs font-bold text-[var(--text-primary)] truncate">{track.title}</h5>
+                            <p className="text-[11px] text-[var(--text-muted)] truncate">{track.artist}</p>
+                          </div>
+                        </div>
+                        <Play className="w-3.5 h-3.5 text-[var(--accent-primary)] opacity-0 group-hover:opacity-100 transition-opacity fill-current mr-2" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* HOME SECTION 4: Filtered Track Shelf / Library List */}
+              <TrackList
+                tracks={filteredTracks}
+                currentTrack={currentTrack}
+                isPlaying={isPlaying}
+                onSelectTrack={handleSelectTrack}
+                onToggleFavorite={handleToggleFavorite}
+                onToggleDownload={handleToggleDownload}
+                onIngestOnlineTrack={handleIngestTrack}
+                onAddToQueue={handleAddToQueue}
+                onAddToPlaylist={(track) => setPlaylistTrackToAdd(track)}
+                title={
+                  currentTab === 'vault' 
+                    ? "The Vault (Your Starred & Downloaded Music)" 
+                    : searchQuery 
+                    ? `Search Results for "${searchQuery}"`
+                    : selectedMood !== 'all'
+                    ? `${selectedMood.toUpperCase()} Curated Shelf`
+                    : "Curated Sanctuary Shelf"
+                }
+                subtitle={
+                  selectedYearRange 
+                    ? `Filtering songs released between ${selectedYearRange.min} and ${selectedYearRange.max}`
+                    : selectedLanguage !== 'all' 
+                    ? `Filtered by ${selectedLanguage.toUpperCase()} songs` 
+                    : "Songs discovered and saved across worldwide languages"
+                }
+              />
+            </>
           )}
 
-          {/* Track Shelf / Library List */}
-          <TrackList
-            tracks={filteredTracks}
-            currentTrack={currentTrack}
-            isPlaying={isPlaying}
-            onSelectTrack={handleSelectTrack}
-            onToggleFavorite={handleToggleFavorite}
-            onToggleDownload={handleToggleDownload}
-            onIngestOnlineTrack={handleIngestTrack}
-            title={currentTab === 'vault' ? "The Vault (Your Playlists & Offline)" : "Curated Sanctuary Shelf"}
-            subtitle={
-              selectedLanguage !== 'all' 
-                ? `Filtered by ${selectedLanguage.toUpperCase()} curations` 
-                : "Songs you & your friends have discovered and saved"
-            }
-          />
         </main>
 
-        {/* 4. Floating Acoustic Island Player */}
+        {/* 4. Floating Acoustic Island Player (Frosted Glass Translucent) */}
         <FloatingPlayer
           currentTrack={currentTrack}
           isPlaying={isPlaying}
@@ -562,10 +1069,62 @@ export function App() {
           onOpenLivingRoom={() => setIsLivingRoomOpen(true)}
           onToggleDownload={handleToggleDownload}
           isBlendSession={Boolean(blendSession)}
+          queueCount={queue.length}
+          onOpenQueue={() => setIsQueueOpen(true)}
+          onAddToPlaylist={(track) => setPlaylistTrackToAdd(track)}
         />
       </div>
 
       {/* 5. Modals & Overlays */}
+      {/* Queue Drawer */}
+      <QueueDrawer
+        isOpen={isQueueOpen}
+        onClose={() => setIsQueueOpen(false)}
+        currentTrack={currentTrack}
+        isPlaying={isPlaying}
+        queue={queue}
+        onPlayTrack={handleSelectTrack}
+        onRemoveFromQueue={handleRemoveFromQueue}
+        onClearQueue={handleClearQueue}
+        upcomingAutoplayTrack={upcomingAutoplayTrack}
+      />
+
+      {/* Create Playlist Modal */}
+      <CreatePlaylistModal
+        isOpen={isCreatePlaylistOpen}
+        onClose={() => setIsCreatePlaylistOpen(false)}
+        onCreatePlaylist={handleCreatePlaylist}
+      />
+
+      {/* Add Track to Playlist Modal */}
+      <AddToPlaylistModal
+        isOpen={Boolean(playlistTrackToAdd)}
+        onClose={() => setPlaylistTrackToAdd(null)}
+        track={playlistTrackToAdd}
+        playlists={playlists}
+        onToggleTrackInPlaylist={handleToggleTrackInPlaylist}
+        onOpenCreatePlaylist={() => {
+          setPlaylistTrackToAdd(null);
+          setIsCreatePlaylistOpen(true);
+        }}
+      />
+
+      {/* User Personalization Settings Modal */}
+      <UserSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        preferences={userPreferences}
+        onSavePreferences={handleSavePreferences}
+      />
+
+      {/* 1st-Time User Onboarding Modal */}
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        username={currentUser?.username}
+        onComplete={handleSavePreferences}
+      />
+
+      {/* Living Room Mode */}
       {isLivingRoomOpen && currentTrack && (
         <LivingRoomMode
           track={currentTrack}
@@ -580,10 +1139,10 @@ export function App() {
           onFastForward={() => handleFastForward(10)}
           onRewind={() => handleRewind(10)}
           isBlendSession={Boolean(blendSession)}
-          blendParticipants={blendSession?.participants}
         />
       )}
 
+      {/* Blend Lounge Modal */}
       <BlendLoungeModal
         isOpen={isBlendModalOpen}
         onClose={() => setIsBlendModalOpen(false)}
@@ -593,30 +1152,24 @@ export function App() {
         currentTrack={currentTrack}
       />
 
+      {/* Admin Studio Modal */}
       <AdminStudioModal
         isOpen={isAdminModalOpen}
         onClose={() => setIsAdminModalOpen(false)}
         metrics={adminMetrics}
-        onToggle2FA={(val) => {
+        onToggle2FA={(enabled) => {
           setAdminMetrics(prev => ({
             ...prev,
-            activity: { ...prev.activity, twoFactorEnabled: val }
+            activity: { ...prev.activity, twoFactorEnabled: enabled }
           }));
-          showToast(`Admin 2FA OTP requirement set to: ${val ? 'ON' : 'OFF'}`);
+          showToast(`2FA ${enabled ? 'Enabled' : 'Disabled'}`);
         }}
         onTriggerPrune={() => {
-          setAdminMetrics(prev => ({
-            ...prev,
-            storage: {
-              ...prev.storage,
-              cachedGB: Math.max(0, prev.storage.cachedGB - 0.015),
-              usedGB: prev.storage.usedGB - 0.015,
-              freeGB: prev.storage.freeGB + 0.015
-            }
-          }));
+          showToast('LRU Pruning completed: 1.2 GB freed');
         }}
       />
 
+      {/* Auth Modal */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
@@ -624,14 +1177,16 @@ export function App() {
         onLoginSuccess={(user) => {
           setCurrentUser(user);
           showToast(`Welcome back, ${user.username}!`);
+          // If first time login, trigger onboarding
+          if (!userPreferences.onboardingCompleted) {
+            setIsOnboardingOpen(true);
+          }
         }}
         onLogout={() => {
           setCurrentUser(null);
-          showToast('Logged out');
+          showToast('Logged out successfully');
         }}
       />
     </div>
   );
 }
-
-export default App;

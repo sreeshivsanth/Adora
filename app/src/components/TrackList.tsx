@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Heart, Download, Check, Globe, ShieldCheck } from 'lucide-react';
+import { Play, Heart, Download, Check, Globe, ShieldCheck, ListPlus, FolderPlus, Trash2 } from 'lucide-react';
 import { Track } from '../types';
 
 interface TrackListProps {
@@ -10,6 +10,9 @@ interface TrackListProps {
   onToggleFavorite: (trackId: string) => void;
   onToggleDownload: (track: Track) => void;
   onIngestOnlineTrack?: (track: Track) => void;
+  onAddToQueue?: (track: Track) => void;
+  onAddToPlaylist?: (track: Track) => void;
+  onRemoveFromPlaylist?: (trackId: string) => void;
   title: string;
   subtitle?: string;
 }
@@ -22,6 +25,9 @@ export const TrackList: React.FC<TrackListProps> = ({
   onToggleFavorite,
   onToggleDownload,
   onIngestOnlineTrack,
+  onAddToQueue,
+  onAddToPlaylist,
+  onRemoveFromPlaylist,
   title,
   subtitle
 }) => {
@@ -43,7 +49,7 @@ export const TrackList: React.FC<TrackListProps> = ({
           )}
         </div>
         <span className="text-xs text-[var(--text-muted)] font-mono font-medium">
-          {tracks.length} Tracks
+          {tracks.length} Track{tracks.length === 1 ? '' : 's'}
         </span>
       </div>
 
@@ -99,14 +105,26 @@ export const TrackList: React.FC<TrackListProps> = ({
                 </div>
               </div>
 
-              {/* Center: Language & Immunity Badges */}
+              {/* Center: Language, Year & Mood Badges */}
               <div className="hidden sm:flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded-full text-[10px] uppercase font-semibold bg-[var(--surface-hover)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
                   {track.language}
                 </span>
 
+                {track.releaseYear && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-[var(--surface-hover)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
+                    {track.releaseYear}
+                  </span>
+                )}
+
+                {track.mood && (
+                  <span className="hidden md:inline px-2 py-0.5 rounded-full text-[10px] capitalize font-medium bg-[var(--accent-primary)]/10 text-[var(--accent-primary)]">
+                    {track.mood}
+                  </span>
+                )}
+
                 {track.isStarred && (
-                  <span className="hidden md:inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium" title="Immune from LRU Pruning">
+                  <span className="hidden lg:inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium" title="Immune from LRU Pruning">
                     <ShieldCheck className="w-3 h-3" />
                     Immune
                   </span>
@@ -114,7 +132,40 @@ export const TrackList: React.FC<TrackListProps> = ({
               </div>
 
               {/* Right Column: Actions & Duration */}
-              <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-2.5" onClick={(e) => e.stopPropagation()}>
+                {/* Add to Queue Button */}
+                {onAddToQueue && (
+                  <button
+                    onClick={() => onAddToQueue(track)}
+                    className="p-1.5 rounded-full text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--surface-hover)] transition-all"
+                    title="Add to queue"
+                  >
+                    <ListPlus className="w-4 h-4" />
+                  </button>
+                )}
+
+                {/* Add to Playlist Button */}
+                {onAddToPlaylist && (
+                  <button
+                    onClick={() => onAddToPlaylist(track)}
+                    className="p-1.5 rounded-full text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--surface-hover)] transition-all"
+                    title="Add to playlist"
+                  >
+                    <FolderPlus className="w-4 h-4" />
+                  </button>
+                )}
+
+                {/* Remove from Playlist Button (if viewing inside a playlist) */}
+                {onRemoveFromPlaylist && (
+                  <button
+                    onClick={() => onRemoveFromPlaylist(track.id)}
+                    className="p-1.5 rounded-full text-[var(--text-muted)] hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                    title="Remove from playlist"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+
                 {/* JIT On-Demand Add Button if track is from online discovery */}
                 {!track.isLocal && onIngestOnlineTrack && (
                   <button

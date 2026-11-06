@@ -90,6 +90,46 @@ export async function fetchLocalTracks(token?: string) {
   return res.json();
 }
 
+export async function fetchUserPreferences(token?: string) {
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetchWithFallback('/api/user/preferences', { headers });
+  return res.json();
+}
+
+export async function saveUserPreferences(prefs: { preferredLanguages: string[]; favoriteArtists: string[]; onboardingCompleted: boolean }, token?: string) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetchWithFallback('/api/user/preferences', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(prefs)
+  });
+  return res.json();
+}
+
+export async function fetchUserPlaylists(token?: string) {
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetchWithFallback('/api/user/playlists', { headers });
+  return res.json();
+}
+
+export async function saveUserPlaylists(playlists: any[], token?: string) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetchWithFallback('/api/user/playlists', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ playlists })
+  });
+  return res.json();
+}
+
 export function resolveAudioUrl(url?: string): string | undefined {
   if (!url) return undefined;
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('asset:')) {

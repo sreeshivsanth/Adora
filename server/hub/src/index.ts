@@ -198,24 +198,41 @@ app.post('/api/auth/forgot-password', (req: Request, res: Response) => {
 // Curated seed tracks for instant ambient discovery (Full YouTube Music audio)
 const CURATED_SEED: Record<string, any[]> = {
   tamil: [
-    { id: 'itunes_1502476579', title: 'Vaathi Coming', artist: 'Anirudh Ravichander & Gana Balachandar', album: 'Master', language: 'tamil', durationSec: 230, cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', audioUrl: '/api/stream/full?title=Vaathi+Coming&artist=Anirudh+Ravichander', isLocal: false },
-    { id: 'itunes_1556858076', title: 'Enjoy Enjaami', artist: 'Dhee, Arivu & Santhosh Narayanan', album: 'Enjoy Enjaami - Single', language: 'tamil', durationSec: 302, cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600', audioUrl: '/api/stream/full?title=Enjoy+Enjaami&artist=Dhee+Arivu', isLocal: false },
-    { id: 'itunes_1583726481', title: 'Adiye', artist: 'Dhibu Ninan Thomas & Kapil Kapilan', album: 'Bachelor', language: 'tamil', durationSec: 254, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', audioUrl: '/api/stream/full?title=Adiye&artist=Dhibu+Ninan+Thomas', isLocal: false },
-    { id: 'itunes_1699923812', title: 'Hukum - Thalaivar Alappara', artist: 'Anirudh Ravichander & Super Subu', album: 'Jailer', language: 'tamil', durationSec: 207, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', audioUrl: '/api/stream/full?title=Hukum+Thalaivar+Alappara&artist=Anirudh+Ravichander', isLocal: false }
+    { id: 'itunes_1502476579', title: 'Vaathi Coming', artist: 'Anirudh Ravichander & Gana Balachandar', album: 'Master', language: 'tamil', durationSec: 230, cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', audioUrl: '/api/stream/full?title=Vaathi+Coming&artist=Anirudh+Ravichander', isLocal: false, releaseYear: 2021, mood: 'energetic', genre: 'Soundtrack' },
+    { id: 'itunes_1556858076', title: 'Enjoy Enjaami', artist: 'Dhee, Arivu & Santhosh Narayanan', album: 'Enjoy Enjaami - Single', language: 'tamil', durationSec: 302, cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600', audioUrl: '/api/stream/full?title=Enjoy+Enjaami&artist=Dhee+Arivu', isLocal: false, releaseYear: 2021, mood: 'chill', genre: 'Indie' },
+    { id: 'itunes_1583726481', title: 'Adiye', artist: 'Dhibu Ninan Thomas & Kapil Kapilan', album: 'Bachelor', language: 'tamil', durationSec: 254, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', audioUrl: '/api/stream/full?title=Adiye&artist=Dhibu+Ninan+Thomas', isLocal: false, releaseYear: 2021, mood: 'romantic', genre: 'Soundtrack' },
+    { id: 'itunes_1699923812', title: 'Hukum - Thalaivar Alappara', artist: 'Anirudh Ravichander & Super Subu', album: 'Jailer', language: 'tamil', durationSec: 207, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', audioUrl: '/api/stream/full?title=Hukum+Thalaivar+Alappara&artist=Anirudh+Ravichander', isLocal: false, releaseYear: 2023, mood: 'energetic', genre: 'Soundtrack' },
+    { id: 'itunes_tamil_2000', title: 'Kandukondain Kandukondain', artist: 'A.R. Rahman, Hariharan & Mahalakshmi', album: 'Kandukondain Kandukondain', language: 'tamil', durationSec: 312, cover: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=600', audioUrl: '/api/stream/full?title=Kandukondain+Kandukondain&artist=A.R.+Rahman', isLocal: false, releaseYear: 2000, mood: 'romantic', genre: 'Classical' },
+    { id: 'itunes_tamil_2006', title: 'Munbe Vaa', artist: 'A.R. Rahman, Naresh Iyer & Shreya Ghoshal', album: 'Sillunu Oru Kaadhal', language: 'tamil', durationSec: 358, cover: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=600', audioUrl: '/api/stream/full?title=Munbe+Vaa&artist=A.R.+Rahman+Naresh+Iyer', isLocal: false, releaseYear: 2006, mood: 'romantic', genre: 'Soundtrack' }
   ],
   hindi: [
-    { id: 'itunes_1634938221', title: 'Kesariya', artist: 'Pritam, Arijit Singh & Amitabh Bhattacharya', album: 'Brahmastra', language: 'hindi', durationSec: 268, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', audioUrl: '/api/stream/full?title=Kesariya&artist=Arijit+Singh', isLocal: false },
-    { id: 'itunes_1440782917', title: 'Arziyan', artist: 'A.R. Rahman, Javed Ali & Kailash Kher', album: 'Delhi-6', language: 'hindi', durationSec: 521, cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', audioUrl: '/api/stream/full?title=Arziyan&artist=A.R.+Rahman', isLocal: false },
-    { id: 'itunes_1163456789', title: 'Channa Mereya', artist: 'Pritam & Arijit Singh', album: 'Ae Dil Hai Mushkil', language: 'hindi', durationSec: 289, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', audioUrl: '/api/stream/full?title=Channa+Mereya&artist=Arijit+Singh', isLocal: false }
+    { id: 'itunes_1634938221', title: 'Kesariya', artist: 'Pritam, Arijit Singh & Amitabh Bhattacharya', album: 'Brahmastra', language: 'hindi', durationSec: 268, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', audioUrl: '/api/stream/full?title=Kesariya&artist=Arijit+Singh', isLocal: false, releaseYear: 2022, mood: 'romantic', genre: 'Bollywood' },
+    { id: 'itunes_1440782917', title: 'Arziyan', artist: 'A.R. Rahman, Javed Ali & Kailash Kher', album: 'Delhi-6', language: 'hindi', durationSec: 521, cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', audioUrl: '/api/stream/full?title=Arziyan&artist=A.R.+Rahman', isLocal: false, releaseYear: 2009, mood: 'devotional', genre: 'Sufi' },
+    { id: 'itunes_1163456789', title: 'Channa Mereya', artist: 'Pritam & Arijit Singh', album: 'Ae Dil Hai Mushkil', language: 'hindi', durationSec: 289, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', audioUrl: '/api/stream/full?title=Channa+Mereya&artist=Arijit+Singh', isLocal: false, releaseYear: 2016, mood: 'melancholic', genre: 'Bollywood' },
+    { id: 'itunes_hindi_2003', title: 'Kal Ho Naa Ho', artist: 'Shankar-Ehsaan-Loy & Sonu Nigam', album: 'Kal Ho Naa Ho', language: 'hindi', durationSec: 322, cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600', audioUrl: '/api/stream/full?title=Kal+Ho+Naa+Ho&artist=Sonu+Nigam', isLocal: false, releaseYear: 2003, mood: 'melancholic', genre: 'Bollywood' },
+    { id: 'itunes_hindi_2013', title: 'Tum Hi Ho', artist: 'Mithoon & Arijit Singh', album: 'Aashiqui 2', language: 'hindi', durationSec: 262, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', audioUrl: '/api/stream/full?title=Tum+Hi+Ho&artist=Arijit+Singh', isLocal: false, releaseYear: 2013, mood: 'romantic', genre: 'Bollywood' }
   ],
   english: [
-    { id: 'itunes_1440857781', title: 'Midnight City', artist: 'M83', album: 'Hurry Up, We\'re Dreaming', language: 'english', durationSec: 243, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', audioUrl: '/api/stream/full?title=Midnight+City&artist=M83', isLocal: false },
-    { id: 'itunes_1440833249', title: 'Blinding Lights', artist: 'The Weeknd', album: 'After Hours', language: 'english', durationSec: 200, cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600', audioUrl: '/api/stream/full?title=Blinding+Lights&artist=The+Weeknd', isLocal: false },
-    { id: 'itunes_647318188', title: 'Get Lucky', artist: 'Daft Punk feat. Pharrell Williams', album: 'Random Access Memories', language: 'english', durationSec: 369, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', audioUrl: '/api/stream/full?title=Get+Lucky&artist=Daft+Punk', isLocal: false }
+    { id: 'itunes_1440857781', title: 'Midnight City', artist: 'M83', album: 'Hurry Up, We\'re Dreaming', language: 'english', durationSec: 243, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', audioUrl: '/api/stream/full?title=Midnight+City&artist=M83', isLocal: false, releaseYear: 2011, mood: 'focus', genre: 'Electronic' },
+    { id: 'itunes_1440833249', title: 'Blinding Lights', artist: 'The Weeknd', album: 'After Hours', language: 'english', durationSec: 200, cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600', audioUrl: '/api/stream/full?title=Blinding+Lights&artist=The+Weeknd', isLocal: false, releaseYear: 2019, mood: 'energetic', genre: 'Pop' },
+    { id: 'itunes_647318188', title: 'Get Lucky', artist: 'Daft Punk feat. Pharrell Williams', album: 'Random Access Memories', language: 'english', durationSec: 369, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', audioUrl: '/api/stream/full?title=Get+Lucky&artist=Daft+Punk', isLocal: false, releaseYear: 2013, mood: 'party', genre: 'Funk' },
+    { id: 'itunes_eng_2002', title: 'In the End', artist: 'Linkin Park', album: 'Hybrid Theory', language: 'english', durationSec: 216, cover: 'https://images.unsplash.com/photo-1501612780327-45045538702b?w=600', audioUrl: '/api/stream/full?title=In+The+End&artist=Linkin+Park', isLocal: false, releaseYear: 2001, mood: 'energetic', genre: 'Rock' }
+  ],
+  telugu: [
+    { id: 'itunes_tel_2020', title: 'Samajavaragamana', artist: 'Thaman S & Sid Sriram', album: 'Ala Vaikunthapurramuloo', language: 'telugu', durationSec: 221, cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', audioUrl: '/api/stream/full?title=Samajavaragamana&artist=Sid+Sriram', isLocal: false, releaseYear: 2020, mood: 'chill', genre: 'Soundtrack' },
+    { id: 'itunes_tel_2022', title: 'Naatu Naatu', artist: 'M.M. Keeravaani, Rahul Sipligunj & Kaala Bhairava', album: 'RRR', language: 'telugu', durationSec: 215, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', audioUrl: '/api/stream/full?title=Naatu+Naatu&artist=Keeravaani', isLocal: false, releaseYear: 2022, mood: 'energetic', genre: 'Soundtrack' }
+  ],
+  malayalam: [
+    { id: 'itunes_mal_2015', title: 'Malare', artist: 'Vijay Yesudas & Rajesh Murugesan', album: 'Premam', language: 'malayalam', durationSec: 316, cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600', audioUrl: '/api/stream/full?title=Malare&artist=Vijay+Yesudas', isLocal: false, releaseYear: 2015, mood: 'romantic', genre: 'Soundtrack' },
+    { id: 'itunes_mal_2022', title: 'Darshana', artist: 'Hesham Abdul Wahab', album: 'Hridayam', language: 'malayalam', durationSec: 238, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', audioUrl: '/api/stream/full?title=Darshana&artist=Hesham+Abdul+Wahab', isLocal: false, releaseYear: 2022, mood: 'romantic', genre: 'Soundtrack' }
+  ],
+  punjabi: [
+    { id: 'itunes_pun_2020', title: 'Brown Munde', artist: 'AP Dhillon, Gurinder Gill & Shinda Kahlon', album: 'Brown Munde', language: 'punjabi', durationSec: 268, cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600', audioUrl: '/api/stream/full?title=Brown+Munde&artist=AP+Dhillon', isLocal: false, releaseYear: 2020, mood: 'party', genre: 'Hip-Hop' },
+    { id: 'itunes_pun_2021', title: 'Lover', artist: 'Diljit Dosanjh', album: 'MoonChild Era', language: 'punjabi', durationSec: 185, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', audioUrl: '/api/stream/full?title=Lover&artist=Diljit+Dosanjh', isLocal: false, releaseYear: 2021, mood: 'energetic', genre: 'Pop' }
   ],
   korean: [
-    { id: 'itunes_1660603593', title: 'Ditto', artist: 'NewJeans', album: 'NewJeans \'OMG\'', language: 'korean', durationSec: 185, cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600', audioUrl: '/api/stream/full?title=Ditto&artist=NewJeans', isLocal: false },
-    { id: 'itunes_1694764831', title: 'Super Shy', artist: 'NewJeans', album: 'Get Up', language: 'korean', durationSec: 154, cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600', audioUrl: '/api/stream/full?title=Super+Shy&artist=NewJeans', isLocal: false }
+    { id: 'itunes_1660603593', title: 'Ditto', artist: 'NewJeans', album: 'NewJeans \'OMG\'', language: 'korean', durationSec: 185, cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600', audioUrl: '/api/stream/full?title=Ditto&artist=NewJeans', isLocal: false, releaseYear: 2022, mood: 'chill', genre: 'K-Pop' },
+    { id: 'itunes_1694764831', title: 'Super Shy', artist: 'NewJeans', album: 'Get Up', language: 'korean', durationSec: 154, cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=600', audioUrl: '/api/stream/full?title=Super+Shy&artist=NewJeans', isLocal: false, releaseYear: 2023, mood: 'energetic', genre: 'K-Pop' }
   ]
 };
 
@@ -237,7 +254,7 @@ app.get('/api/search', optionalToken, async (req: AuthenticatedRequest, res: Res
 
   try {
     const searchTerm = language !== 'all' ? `${query} ${language}` : query;
-    const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=30`;
+    const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&entity=song&limit=40`;
     const response = await fetch(itunesUrl);
 
     if (!response.ok) {
@@ -261,6 +278,24 @@ app.get('/api/search', optionalToken, async (req: AuthenticatedRequest, res: Res
         ? `/api/stream?path=${encodeURIComponent(path.relative(MUSIC_DIR, localFileMp3))}`
         : `/api/stream/full?title=${encodeURIComponent(r.trackName)}&artist=${encodeURIComponent(r.artistName)}&id=${r.trackId}&fallback=${encodeURIComponent(r.previewUrl || '')}`;
 
+      const releaseYear = r.releaseDate ? new Date(r.releaseDate).getFullYear() : undefined;
+      const genre = r.primaryGenreName || 'Music';
+
+      // Infer mood dynamically from genre and title
+      const lowerTitle = (r.trackName || '').toLowerCase();
+      let inferredMood = 'chill';
+      if (/dance|party|club|rock|electronic|hip-hop/i.test(genre) || /remix|beat|party|dhol|bhangra/i.test(lowerTitle)) {
+        inferredMood = 'energetic';
+      } else if (/love|heart|soul|romantic|unplugged|acoustic/i.test(lowerTitle) || /romance|r&b/i.test(genre)) {
+        inferredMood = 'romantic';
+      } else if (/sad|alone|breakup|cry|tear/i.test(lowerTitle)) {
+        inferredMood = 'melancholic';
+      } else if (/devotional|bhajan|aarti|spiritual|gospel/i.test(lowerTitle) || /devotional/i.test(genre)) {
+        inferredMood = 'devotional';
+      } else if (/ambient|sleep|study|lo-fi|piano|relax/i.test(lowerTitle) || /classical|ambient/i.test(genre)) {
+        inferredMood = 'focus';
+      }
+
       return {
         id: `itunes_${r.trackId}`,
         title: r.trackName,
@@ -272,7 +307,10 @@ app.get('/api/search', optionalToken, async (req: AuthenticatedRequest, res: Res
         audioUrl: fullAudioUrl,
         isLocal: isLocal,
         isDownloaded: isLocal,
-        isStarred: false
+        isStarred: false,
+        releaseYear: releaseYear,
+        mood: inferredMood,
+        genre: genre
       };
     });
 
@@ -634,6 +672,97 @@ app.get('/api/tracks/local', (_req: Request, res: Response) => {
 
   scanDir(MUSIC_DIR);
   res.json({ tracks: localTracks, count: localTracks.length });
+});
+
+// -------------------------------------------------------------
+// User Preferences & Playlists Persistence
+// -------------------------------------------------------------
+const DATA_DIR = path.resolve(__dirname, '../../data');
+const PREFERENCES_FILE = path.join(DATA_DIR, 'user_preferences.json');
+const PLAYLISTS_FILE = path.join(DATA_DIR, 'user_playlists.json');
+
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+app.get('/api/user/preferences', optionalToken, (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id || 'default_user';
+  try {
+    if (fs.existsSync(PREFERENCES_FILE)) {
+      const allPrefs = JSON.parse(fs.readFileSync(PREFERENCES_FILE, 'utf-8'));
+      const userPrefs = allPrefs[userId] || {
+        preferredLanguages: ['tamil', 'hindi', 'english'],
+        favoriteArtists: ['A.R. Rahman', 'Anirudh Ravichander', 'Arijit Singh', 'The Weeknd'],
+        onboardingCompleted: false
+      };
+      res.json({ preferences: userPrefs });
+      return;
+    }
+  } catch (e) {}
+
+  res.json({
+    preferences: {
+      preferredLanguages: ['tamil', 'hindi', 'english'],
+      favoriteArtists: ['A.R. Rahman', 'Anirudh Ravichander', 'Arijit Singh', 'The Weeknd'],
+      onboardingCompleted: false
+    }
+  });
+});
+
+app.post('/api/user/preferences', optionalToken, (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id || 'default_user';
+  const { preferredLanguages, favoriteArtists, onboardingCompleted } = req.body;
+
+  let allPrefs: Record<string, any> = {};
+  try {
+    if (fs.existsSync(PREFERENCES_FILE)) {
+      allPrefs = JSON.parse(fs.readFileSync(PREFERENCES_FILE, 'utf-8'));
+    }
+  } catch (e) {}
+
+  allPrefs[userId] = {
+    preferredLanguages: Array.isArray(preferredLanguages) ? preferredLanguages : ['tamil', 'hindi', 'english'],
+    favoriteArtists: Array.isArray(favoriteArtists) ? favoriteArtists : [],
+    onboardingCompleted: Boolean(onboardingCompleted)
+  };
+
+  try {
+    fs.writeFileSync(PREFERENCES_FILE, JSON.stringify(allPrefs, null, 2));
+  } catch (e) {}
+
+  res.json({ success: true, preferences: allPrefs[userId] });
+});
+
+app.get('/api/user/playlists', optionalToken, (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id || 'default_user';
+  try {
+    if (fs.existsSync(PLAYLISTS_FILE)) {
+      const allPlaylists = JSON.parse(fs.readFileSync(PLAYLISTS_FILE, 'utf-8'));
+      res.json({ playlists: allPlaylists[userId] || [] });
+      return;
+    }
+  } catch (e) {}
+  res.json({ playlists: [] });
+});
+
+app.post('/api/user/playlists', optionalToken, (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id || 'default_user';
+  const { playlists } = req.body;
+
+  let allPlaylists: Record<string, any> = {};
+  try {
+    if (fs.existsSync(PLAYLISTS_FILE)) {
+      allPlaylists = JSON.parse(fs.readFileSync(PLAYLISTS_FILE, 'utf-8'));
+    }
+  } catch (e) {}
+
+  allPlaylists[userId] = Array.isArray(playlists) ? playlists : [];
+
+  try {
+    fs.writeFileSync(PLAYLISTS_FILE, JSON.stringify(allPlaylists, null, 2));
+  } catch (e) {}
+
+  res.json({ success: true, playlists: allPlaylists[userId] });
 });
 
 // -------------------------------------------------------------

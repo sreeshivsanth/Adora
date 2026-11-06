@@ -3,7 +3,7 @@ export interface Track {
   title: string;
   artist: string;
   album: string;
-  language: 'tamil' | 'hindi' | 'english' | 'korean' | 'all';
+  language: string;
   durationSec: number;
   cover: string;
   audioUrl?: string;
@@ -11,6 +11,25 @@ export interface Track {
   isDownloaded?: boolean;
   isStarred?: boolean;
   lyrics?: string[];
+  releaseYear?: number;
+  mood?: string;
+  genre?: string;
+}
+
+export interface Playlist {
+  id: string;
+  name: string;
+  description?: string;
+  coverUrl?: string;
+  trackIds: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface UserPreferences {
+  preferredLanguages: string[];
+  favoriteArtists: string[];
+  onboardingCompleted: boolean;
 }
 
 export interface User {
@@ -19,6 +38,8 @@ export interface User {
   role: 'admin' | 'user';
   token?: string;
   refreshToken?: string;
+  preferences?: UserPreferences;
+  isNewUser?: boolean;
 }
 
 export interface Device {
