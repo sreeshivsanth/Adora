@@ -193,6 +193,12 @@ else
   echo ""
   echo "======================================================"
   if [ -n "$TUNNEL_URL" ]; then
+    # Auto-sync app/.env with active live endpoint
+    if [ -f "$DIR/../app/.env" ]; then
+      sed -i "s|VITE_API_URL=.*|VITE_API_URL=$TUNNEL_URL|g" "$DIR/../app/.env"
+      sed -i "s|VITE_WS_URL=.*|VITE_WS_URL=${TUNNEL_URL/https:\/\//wss:\/\/}|g" "$DIR/../app/.env"
+      echo "[+] Auto-synced app/.env with active tunnel endpoint."
+    fi
     echo "🎉 YOUR LIVE ADORA CLOUDFLARE URL IS:"
     echo ""
     echo "👉  $TUNNEL_URL  👈"

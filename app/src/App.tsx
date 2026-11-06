@@ -200,23 +200,18 @@ export function App() {
     }
   }, [isPlaying, currentTrack]);
 
-  // Live Worldwide Music Search (300ms debounce)
+  // Live Worldwide Music Search (250ms debounce)
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
         const data = await searchTracks(searchQuery, selectedLanguage, currentUser?.token);
-        if (data && Array.isArray(data.results) && data.results.length > 0) {
-          setTracks(prev => {
-            const preserved = prev.filter(t => t.isStarred || t.isDownloaded);
-            const newIds = new Set(data.results.map((r: Track) => r.id));
-            const distinctPreserved = preserved.filter(t => !newIds.has(t.id));
-            return [...data.results, ...distinctPreserved];
-          });
+        if (data && Array.isArray(data.results)) {
+          setTracks(data.results);
         }
       } catch (err) {
         console.warn('[Adora Live Search]', err);
       }
-    }, 300);
+    }, 250);
 
     return () => clearTimeout(timer);
   }, [searchQuery, selectedLanguage, currentUser?.token]);
@@ -359,16 +354,20 @@ export function App() {
 
   // Filtered tracks
   const filteredTracks = tracks.filter(t => {
-    const matchesLang = selectedLanguage === 'all' || t.language === selectedLanguage;
-    const matchesQuery = !searchQuery || 
-      t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      t.artist.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.album.toLowerCase().includes(searchQuery.toLowerCase());
-    
     if (currentTab === 'vault') {
-      return matchesLang && matchesQuery && (t.isStarred || t.isDownloaded);
+      const matchesQuery = !searchQuery || 
+        t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        t.artist.toLowerCase().includes(searchQuery.toLowerCase());
+      return (t.isStarred || t.isDownloaded) && matchesQuery;
     }
-    return matchesLang && matchesQuery;
+
+    // When an online search is active, the results are already resolved by the search engine
+    if (searchQuery.trim()) {
+      return true;
+    }
+
+    // Curated ambient browsing filtered by language
+    return selectedLanguage === 'all' || t.language === selectedLanguage;
   });
 
   return (
