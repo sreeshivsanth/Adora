@@ -5,6 +5,10 @@ description = "Adora — Acoustic Sanctuary Music Studio"
 authors = ["Sree Shivsanth"]
 edition = "2021"
 
+[lib]
+name = "adora_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 

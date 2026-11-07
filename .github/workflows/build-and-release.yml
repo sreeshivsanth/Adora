@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Release Tag Name (e.g. v1.0.1)'
+        description: 'Release Tag Name (e.g. v1.0.8)'
         required: false
-        default: 'v1.0.1'
+        default: 'v1.0.8'
 
 permissions:
   contents: write
@@ -77,5 +77,100 @@ jobs:
             - Adora Blend real-time synchronized listening
             - Adora Connect cross-device remote control
             - Offline Vault storage
+            - Native mobile Android APK with lock-screen audio support
           releaseDraft: false
           prerelease: false
+
+  build-android:
+    runs-on: ubuntu-latest
+    needs: build-desktop
+    if: always()
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK & Build Tools
+        run: |
+          ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --install "ndk;26.1.10909125" "build-tools;34.0.0"
+          echo "ANDROID_NDK_ROOT=${ANDROID_HOME}/ndk/26.1.10909125" >> $GITHUB_ENV
+
+      - name: Setup Rust Stable and Android Targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: |
+            aarch64-linux-android
+            armv7-linux-androideabi
+
+      - name: Install dependencies & Build Frontend
+        run: |
+          cd app
+          npm ci
+          npm run build
+
+      - name: Initialize Android Scaffolding
+        run: |
+          cd app
+          npx tauri android init --ci
+
+      - name: Setup Self-Signed Release Keystore
+        run: |
+          mkdir -p app/src-tauri/gen/android/app
+          keytool -genkey -v -keystore app/src-tauri/gen/android/adora.keystore \
+            -alias adora -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass adora123 -keypass adora123 \
+            -dname "CN=Adora, OU=Mobile, O=Adora, L=Chennai, S=Tamil Nadu, C=IN"
+          
+          cp app/src-tauri/gen/android/adora.keystore app/src-tauri/gen/android/app/adora.keystore
+
+          cat <<EOF > app/src-tauri/gen/android/keystore.properties
+          storeFile=adora.keystore
+          storePassword=adora123
+          keyAlias=adora
+          keyPassword=adora123
+          password=adora123
+          EOF
+
+          cp app/src-tauri/gen/android/keystore.properties app/src-tauri/gen/android/app/keystore.properties
+
+      - name: Build Android APK via Tauri
+        run: |
+          cd app
+          npx tauri android build --apk --target aarch64 --ci
+
+      - name: Package and Sign APK
+        run: |
+          mkdir -p dist-apk
+          for apk in $(find app/src-tauri/gen/android -name "*.apk"); do
+            echo "Found APK: $apk"
+            if [[ "$apk" == *"unsigned"* ]]; then
+              SIGNED="dist-apk/Adora.apk"
+              $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks app/src-tauri/gen/android/adora.keystore --ks-pass pass:adora123 --out "$SIGNED" "$apk"
+            else
+              cp "$apk" dist-apk/Adora.apk
+            fi
+          done
+          ls -lh dist-apk/
+
+      - name: Upload Android APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          files: dist-apk/*.apk
