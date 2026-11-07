@@ -91,19 +91,47 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
     return () => { active = false; };
   }, [track.id, track.title, track.artist, totalDuration]);
 
+  // User sync offset calibration (allows instant manual alignment if audio has extra intro silence)
+  const [syncOffset, setSyncOffset] = useState<number>(0);
+
+  // High-frequency animation-frame time tracker for silky-smooth sub-second lyric tracking
+  const [smoothTime, setSmoothTime] = useState(positionSec);
+
+  useEffect(() => {
+    setSmoothTime(positionSec);
+  }, [positionSec]);
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    let lastTs = performance.now();
+    let raf: number;
+    const tick = (now: number) => {
+      const delta = (now - lastTs) / 1000;
+      lastTs = now;
+      setSmoothTime(prev => Math.min(totalDuration, prev + delta));
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [isPlaying, totalDuration]);
+
+  // Active time with 150ms vocal anticipation and user offset calibration
+  const effectiveTime = Math.max(0, smoothTime + syncOffset + 0.15);
+
   // Find currently active lyric line index based on playback position
-  let activeIndex = 0;
+  let activeIndex = -1;
   for (let i = 0; i < lyrics.length; i++) {
-    if (positionSec >= lyrics[i].time) {
+    const lineTime = lyrics[i].time;
+    const nextLineTime = i < lyrics.length - 1 ? lyrics[i + 1].time : Infinity;
+    if (effectiveTime >= lineTime && effectiveTime < nextLineTime) {
       activeIndex = i;
-    } else {
       break;
     }
   }
 
   // Smoothly auto-scroll the active line into center view
   useEffect(() => {
-    if (activeLineRef.current && lyrics.length > 0) {
+    if (activeIndex >= 0 && activeLineRef.current && lyrics.length > 0) {
       activeLineRef.current.scrollIntoView({
         behavior: 'smooth',
         block: 'center'
@@ -252,6 +280,14 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
               ref={scrollContainerRef}
               className="flex-1 overflow-y-auto px-4 py-6 rounded-3xl bg-[var(--surface-card)] border border-[var(--border-subtle)] flex flex-col gap-4 shadow-inner no-scrollbar scroll-smooth"
             >
+              {/* Instrumental Intro Indicator when before first lyric line */}
+              {isSynced && activeIndex === -1 && (
+                <div className="py-2.5 px-4 text-center rounded-2xl bg-[var(--surface-hover)]/40 border border-[var(--border-subtle)] text-xs font-mono text-[var(--accent-primary)] animate-pulse flex items-center justify-center gap-2">
+                  <Activity className="w-3.5 h-3.5" />
+                  <span>♪ Instrumental Introduction — Lyrics begin soon ♪</span>
+                </div>
+              )}
+
               {lyrics.map((line, idx) => {
                 const isActive = idx === activeIndex;
                 const isPast = idx < activeIndex;
@@ -261,7 +297,7 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
                     key={idx}
                     ref={isActive ? activeLineRef : null}
                     onClick={() => isSynced && onSeek && onSeek(line.time)}
-                    className={`cursor-pointer transition-all duration-300 py-1 px-3 rounded-2xl flex items-center justify-between group ${
+                    className={`cursor-pointer transition-all duration-300 py-1.5 px-3 rounded-2xl flex items-center justify-between group ${
                       isActive
                         ? 'bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/30 scale-105 shadow-sm'
                         : 'hover:bg-[var(--surface-hover)]/40'
@@ -291,19 +327,57 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
             </div>
           )}
 
-          {/* Reactions */}
-          <div className="flex items-center justify-between px-2">
-            <span className="text-[11px] text-[var(--text-muted)] font-medium">Click any lyric line to jump in song</span>
-            <div className="flex items-center gap-1.5">
-              {['❤️', '🔥', '👏', '✨'].map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => handleSendReaction(emoji)}
-                  className="px-2.5 py-1 rounded-full bg-[var(--surface-card)] hover:bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-xs transition-transform active:scale-125 shadow-sm"
-                >
-                  {emoji}
-                </button>
-              ))}
+          {/* Sync Calibration Nudge Toolbar & Reactions */}
+          <div className="flex flex-col gap-1.5 px-2">
+            {isSynced && lyrics.length > 0 && (
+              <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] bg-[var(--surface-card)] px-3 py-1.5 rounded-2xl border border-[var(--border-subtle)]">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Time Sync:</span>
+                  <button
+                    onClick={() => setSyncOffset(prev => parseFloat((prev - 0.25).toFixed(2)))}
+                    className="px-2 py-0.5 rounded text-[10px] font-mono bg-[var(--surface-hover)] hover:bg-[var(--border-subtle)] text-[var(--text-primary)] transition-colors"
+                    title="Nudge lyrics earlier (-0.25s)"
+                  >
+                    -0.25s
+                  </button>
+                  <span className="font-mono text-[10px] font-bold text-[var(--accent-primary)] px-1 min-w-[36px] text-center">
+                    {syncOffset > 0 ? `+${syncOffset.toFixed(2)}` : syncOffset.toFixed(2)}s
+                  </span>
+                  <button
+                    onClick={() => setSyncOffset(prev => parseFloat((prev + 0.25).toFixed(2)))}
+                    className="px-2 py-0.5 rounded text-[10px] font-mono bg-[var(--surface-hover)] hover:bg-[var(--border-subtle)] text-[var(--text-primary)] transition-colors"
+                    title="Nudge lyrics later (+0.25s)"
+                  >
+                    +0.25s
+                  </button>
+                  {syncOffset !== 0 && (
+                    <button
+                      onClick={() => setSyncOffset(0)}
+                      className="text-[9px] text-[var(--text-muted)] hover:text-[var(--accent-primary)] ml-1 underline transition-colors"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+                <span className="text-[10px] font-mono text-[var(--accent-primary)]/80">
+                  {formatTime(effectiveTime)} / {formatTime(totalDuration)}
+                </span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-0.5">
+              <span className="text-[11px] text-[var(--text-muted)] font-medium">Click any lyric line to jump in song</span>
+              <div className="flex items-center gap-1.5">
+                {['❤️', '🔥', '👏', '✨'].map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => handleSendReaction(emoji)}
+                    className="px-2.5 py-1 rounded-full bg-[var(--surface-card)] hover:bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-xs transition-transform active:scale-125 shadow-sm"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

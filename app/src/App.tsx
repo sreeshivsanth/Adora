@@ -469,14 +469,14 @@ export default function App() {
     } else if (currentTrack) {
       setDurationSec(currentTrack.durationSec || 30);
     }
-    if (isPlaying && audioRef.current) {
+    if (isPlaying && audioRef.current && audioRef.current.paused) {
       audioRef.current.play().catch(e => console.warn('[Adora Playback]', e));
     }
   };
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
-      setPositionSec(Math.floor(audioRef.current.currentTime));
+      setPositionSec(audioRef.current.currentTime);
     }
   };
 
@@ -783,7 +783,7 @@ export default function App() {
     const maxDur = effectiveDuration > 0.5 ? effectiveDuration - 0.5 : 0;
     const clamped = Math.max(0, Math.min(pos, maxDur));
     audioRef.current.currentTime = clamped;
-    setPositionSec(Math.floor(clamped));
+    setPositionSec(clamped);
   };
 
   const handleFastForward = (seconds: number = 10) => {
@@ -926,14 +926,23 @@ export default function App() {
       {/* Real Audio Player Element */}
       <audio
         ref={audioRef}
+        preload="auto"
         onLoadedMetadata={handleLoadedMetadata}
+        onLoadedData={() => {
+          if (isPlaying && audioRef.current && audioRef.current.paused) {
+            audioRef.current.play().catch(e => console.warn('[Adora Playback onLoadedData]', e));
+          }
+        }}
         onCanPlay={() => {
           if (isPlaying && audioRef.current && audioRef.current.paused) {
-            audioRef.current.play().catch(e => console.warn('[Adora Playback]', e));
+            audioRef.current.play().catch(e => console.warn('[Adora Playback onCanPlay]', e));
           }
         }}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleNext}
+        onError={() => {
+          console.warn('[Adora Audio Error]', audioRef.current?.error);
+        }}
       />
 
       {/* Toast Notification */}

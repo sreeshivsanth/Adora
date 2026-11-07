@@ -7,6 +7,7 @@ import os from 'os';
 import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
+import { Readable } from 'stream';
 
 const app = express();
 const server = http.createServer(app);
@@ -732,6 +733,7 @@ async function resolveYouTubeAudioStream(title: string, artist?: string): Promis
     console.log(`[YouTube Music Stream] Resolving direct audio stream for: "${cleanTitle}" by "${cleanArtist}"`);
 
     const proc = spawn(ytdlpBinary, [
+      '--extractor-args', 'youtube:player_client=android,web',
       '--js-runtimes', 'node',
       '--no-playlist',
       '--no-warnings',
@@ -843,6 +845,7 @@ function triggerBackgroundIngest(trackTitle: string, artist: string, language: s
   console.log(`[Adora Ingestion] Ingesting: "${cleanTitle}" by ${cleanArtist}...`);
 
   const child = spawn(ytdlpBinary, [
+    '--extractor-args', 'youtube:player_client=android,web',
     '--js-runtimes', 'node',
     searchQuery,
     '-x',
@@ -909,7 +912,40 @@ app.get('/api/ingest/status/:jobId', (req: Request, res: Response) => {
   res.json(job);
 });
 
-// Full-length YouTube Music Audio Stream Endpoint
+// Helper function to stream local files with full HTTP 206 partial content support
+function streamLocalFile(resolvedPath: string, req: Request, res: Response): void {
+  const stat = fs.statSync(resolvedPath);
+  const fileSize = stat.size;
+  const range = req.headers.range;
+  const ext = path.extname(resolvedPath).toLowerCase();
+  const contentType = ext === '.m4a' ? 'audio/mp4' : ext === '.opus' ? 'audio/opus' : ext === '.flac' ? 'audio/flac' : 'audio/mpeg';
+
+  if (range) {
+    const parts = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+    const chunksize = (end - start) + 1;
+    const file = fs.createReadStream(resolvedPath, { start, end });
+    res.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunksize,
+      'Content-Type': contentType,
+      'Access-Control-Allow-Origin': '*'
+    });
+    file.pipe(res);
+  } else {
+    res.writeHead(200, {
+      'Content-Length': fileSize,
+      'Content-Type': contentType,
+      'Accept-Ranges': 'bytes',
+      'Access-Control-Allow-Origin': '*'
+    });
+    fs.createReadStream(resolvedPath).pipe(res);
+  }
+}
+
+// Full-length YouTube Music Audio Stream Endpoint (Direct Proxy Pipeline)
 app.get('/api/stream/full', async (req: Request, res: Response) => {
   const title = (req.query.title as string || '').trim();
   const artist = (req.query.artist as string || '').trim();
@@ -930,15 +966,13 @@ app.get('/api/stream/full', async (req: Request, res: Response) => {
   for (const ext of possibleExtensions) {
     const candidateLocal = path.join(MUSIC_DIR, safeLang, safeArtist, `${safeTitle}${ext}`);
     if (fs.existsSync(candidateLocal)) {
-      const relPath = path.relative(MUSIC_DIR, candidateLocal);
-      res.redirect(302, `/api/stream?path=${encodeURIComponent(relPath)}`);
+      streamLocalFile(candidateLocal, req, res);
       return;
     }
     // Also check generic vault
     const vaultLocal = path.join(MUSIC_DIR, 'vault', safeArtist, `${safeTitle}${ext}`);
     if (fs.existsSync(vaultLocal)) {
-      const relPath = path.relative(MUSIC_DIR, vaultLocal);
-      res.redirect(302, `/api/stream?path=${encodeURIComponent(relPath)}`);
+      streamLocalFile(vaultLocal, req, res);
       return;
     }
   }
@@ -946,12 +980,47 @@ app.get('/api/stream/full', async (req: Request, res: Response) => {
   // 2. Trigger asynchronous background ingestion into local disk for offline preservation
   triggerBackgroundIngest(title, artist, language);
 
-  // 3. Resolve direct YouTube Music Opus/WebM audio stream
+  // 3. Resolve direct YouTube Music Opus/WebM audio stream and proxy directly to client
   try {
     const streamUrl = await resolveYouTubeAudioStream(title, artist);
-    res.redirect(302, streamUrl);
+
+    // Google Video requires YouTube Android Client User-Agent to avoid 403 Forbidden
+    const fetchHeaders: Record<string, string> = {
+      'User-Agent': 'com.google.android.youtube/19.29.37 (Linux; U; Android 14)'
+    };
+    if (req.headers.range) {
+      fetchHeaders['Range'] = req.headers.range as string;
+    }
+
+    const audioResp = await fetch(streamUrl, { headers: fetchHeaders });
+    if (!audioResp.ok && audioResp.status !== 206) {
+      // Clear expired stream cache entry and retry if necessary
+      streamUrlCache.delete(`${title.toLowerCase()}:::${artist.toLowerCase()}`);
+      throw new Error(`Google stream returned status ${audioResp.status}`);
+    }
+
+    res.status(audioResp.status);
+    const contentType = audioResp.headers.get('content-type') || 'audio/webm';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Accept-Ranges', 'bytes');
+    const contentRange = audioResp.headers.get('content-range');
+    if (contentRange) res.setHeader('Content-Range', contentRange);
+    const contentLength = audioResp.headers.get('content-length');
+    if (contentLength) res.setHeader('Content-Length', contentLength);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    if (audioResp.body) {
+      const nodeStream = Readable.fromWeb(audioResp.body as any);
+      nodeStream.pipe(res);
+      req.on('close', () => {
+        nodeStream.destroy();
+      });
+      return;
+    } else {
+      throw new Error('Empty response body from audio stream');
+    }
   } catch (err: any) {
-    console.warn(`[Stream Full Error] Could not extract stream for "${title}":`, err.message);
+    console.warn(`[Stream Full Error] Could not proxy stream for "${title}":`, err.message);
     if (fallbackUrl && fallbackUrl.startsWith('http')) {
       res.redirect(302, fallbackUrl);
     } else {
@@ -977,33 +1046,7 @@ app.get('/api/stream', (req: Request, res: Response) => {
     return;
   }
 
-  const stat = fs.statSync(resolvedPath);
-  const fileSize = stat.size;
-  const range = req.headers.range;
-
-  if (range) {
-    const parts = range.replace(/bytes=/, "").split("-");
-    const start = parseInt(parts[0], 10);
-    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-    const chunksize = (end - start) + 1;
-    const file = fs.createReadStream(resolvedPath, { start, end });
-    const head = {
-      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-      'Accept-Ranges': 'bytes',
-      'Content-Length': chunksize,
-      'Content-Type': 'audio/mpeg',
-    };
-    res.writeHead(206, head);
-    file.pipe(res);
-  } else {
-    const head = {
-      'Content-Length': fileSize,
-      'Content-Type': 'audio/mpeg',
-      'Accept-Ranges': 'bytes',
-    };
-    res.writeHead(200, head);
-    fs.createReadStream(resolvedPath).pipe(res);
-  }
+  streamLocalFile(resolvedPath, req, res);
 });
 
 app.get('/api/tracks/local', (_req: Request, res: Response) => {

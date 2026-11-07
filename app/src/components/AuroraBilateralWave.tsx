@@ -227,3 +227,4 @@ export const AuroraBilateralWave: React.FC<AuroraBilateralWaveProps> = ({
     </div>
   );
 };
+
