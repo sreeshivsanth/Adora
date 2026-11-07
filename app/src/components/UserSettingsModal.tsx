@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { X, Settings, Check, Plus, Sparkles, Heart, Globe2, MapPin } from 'lucide-react';
+import { X, Settings, Check, Plus, Sparkles, Heart, Globe2, MapPin, RefreshCw } from 'lucide-react';
 import { UserPreferences } from '../types';
 import { REGIONS, RegionOption, getRegionByCode, getStatesForRegion } from '../data/regions';
 import { searchMatchingArtists, ARTISTS_DATABASE } from '../data/artists';
+import { checkForUpdates, CURRENT_APP_VERSION, UpdateInfo } from '../services/updateService';
 
 interface UserSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   preferences: UserPreferences;
   onSavePreferences: (prefs: UserPreferences) => void;
+  onTriggerUpdateModal?: (info: UpdateInfo) => void;
+  showToast?: (msg: string) => void;
 }
 
 const ALL_LANGUAGES = [
@@ -28,7 +31,9 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   isOpen,
   onClose,
   preferences,
-  onSavePreferences
+  onSavePreferences,
+  onTriggerUpdateModal,
+  showToast
 }) => {
   const [selectedRegion, setSelectedRegion] = useState<string>(
     preferences?.region || 'IN'
@@ -43,6 +48,29 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
     preferences?.favoriteArtists || ['A.R. Rahman', 'Anirudh Ravichander', 'Arijit Singh']
   );
   const [newArtistInput, setNewArtistInput] = useState('');
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+
+  const handleManualCheckUpdates = async () => {
+    setIsCheckingUpdate(true);
+    try {
+      const info = await checkForUpdates(false);
+      if (info && info.hasUpdate) {
+        if (onTriggerUpdateModal) {
+          onTriggerUpdateModal(info);
+        }
+      } else {
+        if (showToast) {
+          showToast(`✨ You're up to date! Adora v${CURRENT_APP_VERSION} is the latest version.`);
+        }
+      }
+    } catch {
+      if (showToast) {
+        showToast('Unable to check for updates right now.');
+      }
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -338,6 +366,29 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
               })}
             </div>
           </div>
+        </div>
+
+        {/* App Version & In-App Update Checker */}
+        <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[var(--canvas-bg)]/80 border border-[var(--border-subtle)]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] flex items-center justify-center overflow-hidden">
+              <img src="/logo.png" alt="Adora" className="w-6 h-6 object-contain" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-[var(--text-primary)]">Adora Music</span>
+              <span className="text-[10px] font-mono text-[var(--text-muted)]">Version {CURRENT_APP_VERSION}</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleManualCheckUpdates}
+            disabled={isCheckingUpdate}
+            className="px-3 py-1.5 rounded-xl bg-[var(--surface-hover)] hover:bg-[var(--border-subtle)] text-xs font-medium text-[var(--text-primary)] transition-all flex items-center gap-1.5 border border-[var(--border-subtle)] disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+            <span>{isCheckingUpdate ? 'Checking...' : 'Check for Updates'}</span>
+          </button>
         </div>
 
         {/* Footer */}

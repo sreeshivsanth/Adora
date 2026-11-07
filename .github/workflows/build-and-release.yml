@@ -133,6 +133,11 @@ jobs:
           cd app
           npx tauri android init --ci
 
+      - name: Inject Adora Logo as APK Launcher Icons
+        run: |
+          mkdir -p app/src-tauri/gen/android/app/src/main/res
+          cp -r app/src-tauri/icons/android/* app/src-tauri/gen/android/app/src/main/res/ || true
+
       - name: Setup Self-Signed Release Keystore
         run: |
           mkdir -p app/src-tauri/gen/android/app

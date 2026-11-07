@@ -14,6 +14,8 @@ import { PlaylistDetailView } from './components/PlaylistDetailView';
 import { UserSettingsModal } from './components/UserSettingsModal';
 import { OnboardingModal } from './components/OnboardingModal';
 import { AppTrendsView } from './components/AppTrendsView';
+import { UpdateModal } from './components/UpdateModal';
+import { checkForUpdates, UpdateInfo } from './services/updateService';
 import { Track, User, Device, BlendSession, AdminMetrics, Playlist, UserPreferences } from './types';
 import { Sparkles, Radio, CheckCircle, ShieldCheck, Flame, History, FolderPlus, Play, Plus, Music, Disc3, Clock, TrendingUp, Search, FolderHeart, Download, Check, HardDrive, RefreshCw } from 'lucide-react';
 import { REGIONS, getRegionByCode } from './data/regions';
@@ -347,6 +349,8 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(() => !userPreferences.onboardingCompleted);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [availableUpdate, setAvailableUpdate] = useState<UpdateInfo | null>(null);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   // Auth & Devices
   const [currentUser, setCurrentUser] = useState<User | null>({
@@ -425,6 +429,16 @@ export default function App() {
     setIsOnboardingOpen(false);
     showToast('Preferences updated! Your feed is tailored.');
   };
+
+  // In-App Background Auto-Update Check on Startup
+  useEffect(() => {
+    checkForUpdates(true).then((info) => {
+      if (info && info.hasUpdate) {
+        setAvailableUpdate(info);
+        setIsUpdateModalOpen(true);
+      }
+    }).catch(() => {});
+  }, []);
 
   // Sync Preferences & Playlists from Server on login
   useEffect(() => {
@@ -1669,6 +1683,11 @@ export default function App() {
         onClose={() => setIsSettingsOpen(false)}
         preferences={userPreferences}
         onSavePreferences={handleSavePreferences}
+        onTriggerUpdateModal={(info) => {
+          setAvailableUpdate(info);
+          setIsUpdateModalOpen(true);
+        }}
+        showToast={showToast}
       />
 
       {/* 1st-Time User Onboarding Modal */}
@@ -1741,6 +1760,13 @@ export default function App() {
           setCurrentUser(null);
           showToast('Logged out successfully');
         }}
+      />
+
+      {/* In-App Auto-Update Notification Modal */}
+      <UpdateModal
+        updateInfo={availableUpdate}
+        isOpen={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
       />
     </div>
   );
