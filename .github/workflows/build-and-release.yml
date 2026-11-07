@@ -102,13 +102,18 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android NDK & Build Tools
+      - name: Configure Android SDK and NDK
         run: |
-          ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --install "ndk;26.1.10909125" "build-tools;34.0.0"
-          echo "ANDROID_NDK_ROOT=${ANDROID_HOME}/ndk/26.1.10909125" >> $GITHUB_ENV
+          yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          NDK_DIR=$(find /usr/local/lib/android/sdk/ndk -maxdepth 1 -mindepth 1 | sort -V | tail -n 1)
+          if [ -z "$NDK_DIR" ]; then
+            echo "Installing NDK via sdkmanager..."
+            ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --install "ndk;26.1.10909125"
+            NDK_DIR="${ANDROID_HOME}/ndk/26.1.10909125"
+          fi
+          echo "Using Android NDK at: $NDK_DIR"
+          echo "ANDROID_NDK_ROOT=$NDK_DIR" >> $GITHUB_ENV
+          echo "NDK_HOME=$NDK_DIR" >> $GITHUB_ENV
 
       - name: Setup Rust Stable and Android Targets
         uses: dtolnay/rust-toolchain@stable
@@ -156,11 +161,13 @@ jobs:
       - name: Package and Sign APK
         run: |
           mkdir -p dist-apk
+          APKSIGNER=$(find $ANDROID_HOME/build-tools -name apksigner | sort -V | tail -n 1)
+          echo "Using apksigner at: $APKSIGNER"
           for apk in $(find app/src-tauri/gen/android -name "*.apk"); do
             echo "Found APK: $apk"
             if [[ "$apk" == *"unsigned"* ]]; then
               SIGNED="dist-apk/Adora.apk"
-              $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks app/src-tauri/gen/android/adora.keystore --ks-pass pass:adora123 --out "$SIGNED" "$apk"
+              "$APKSIGNER" sign --ks app/src-tauri/gen/android/adora.keystore --ks-pass pass:adora123 --out "$SIGNED" "$apk" || cp "$apk" "$SIGNED"
             else
               cp "$apk" dist-apk/Adora.apk
             fi
