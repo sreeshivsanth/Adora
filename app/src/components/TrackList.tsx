@@ -133,22 +133,22 @@ export const TrackList: React.FC<TrackListProps> = ({
 
               {/* Right Column: Actions & Duration */}
               <div className="flex items-center gap-2.5" onClick={(e) => e.stopPropagation()}>
-                {/* Add to Queue Button */}
+                {/* Add to Queue Button (Visible on sm+ screens to preserve mobile title room) */}
                 {onAddToQueue && (
                   <button
                     onClick={() => onAddToQueue(track)}
-                    className="p-1.5 rounded-full text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--surface-hover)] transition-all"
+                    className="hidden sm:flex p-1.5 rounded-full text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--surface-hover)] transition-all"
                     title="Add to queue"
                   >
                     <ListPlus className="w-4 h-4" />
                   </button>
                 )}
 
-                {/* Add to Playlist Button */}
+                {/* Add to Playlist Button (Visible on sm+ screens to preserve mobile title room) */}
                 {onAddToPlaylist && (
                   <button
                     onClick={() => onAddToPlaylist(track)}
-                    className="p-1.5 rounded-full text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--surface-hover)] transition-all"
+                    className="hidden sm:flex p-1.5 rounded-full text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--surface-hover)] transition-all"
                     title="Add to playlist"
                   >
                     <FolderPlus className="w-4 h-4" />

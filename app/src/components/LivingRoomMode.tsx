@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Minimize2, Play, Pause, SkipBack, SkipForward, RotateCcw, RotateCw, Sparkles, Heart, Activity, Music, Mic2, AlertCircle, Download, Check } from 'lucide-react';
+import { Minimize2, Play, Pause, SkipBack, SkipForward, RotateCcw, RotateCw, Sparkles, Heart, Activity, Music, Mic2, Download, Check } from 'lucide-react';
 import { Track } from '../types';
 import { LyricLine } from '../data/lyrics';
 import { AuroraBilateralWave } from './AuroraBilateralWave';
 import { fetchTrackLyrics } from '../services/api';
-import confetti from 'canvas-confetti';
 
 interface LivingRoomModeProps {
   track: Track;
@@ -139,17 +138,8 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
     }
   }, [activeIndex, lyrics.length]);
 
-  const handleSendReaction = (_emoji: string) => {
-    confetti({
-      particleCount: 25,
-      spread: 60,
-      origin: { y: 0.8 },
-      colors: ['#5EA8A1', '#8FAAB7', '#E1EBED', '#172327']
-    });
-  };
-
   return (
-    <div className="fixed inset-0 z-50 bg-[var(--canvas-bg)] flex flex-col items-center justify-between p-6 md:p-8 select-none overflow-hidden transition-colors">
+    <div className="fixed inset-0 z-50 bg-[var(--canvas-bg)] flex flex-col items-center justify-between p-4 md:p-8 select-none overflow-hidden transition-colors">
       
       {/* Top Header: Title & Close Button */}
       <div className="w-full flex items-center justify-between max-w-5xl z-10">
@@ -174,43 +164,43 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
       </div>
 
       {/* Centerpiece: Spinning Vinyl Disc & Live Synced Lyrics */}
-      <div className="flex-1 w-full max-w-5xl flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-14 my-4 overflow-hidden">
+      <div className="flex-1 w-full max-w-5xl flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-14 my-2 md:my-4 overflow-hidden">
         
         {/* Left Side: The Vinyl Disc Assembly & Sync Wave Visualizer */}
         <div className="relative flex flex-col items-center justify-center flex-shrink-0">
           {/* Ambient Colored Backlight Glow */}
           <div 
-            className="absolute w-72 h-72 md:w-80 md:h-80 rounded-full blur-3xl opacity-35 transition-all duration-1000 -z-10"
+            className="absolute w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 rounded-full blur-3xl opacity-35 transition-all duration-1000 -z-10"
             style={{ backgroundImage: `radial-gradient(circle, var(--accent-primary) 0%, transparent 70%)` }}
           />
 
           {/* Vinyl Record */}
-          <div className={`relative w-64 h-64 md:w-80 md:h-80 rounded-full bg-neutral-900 border-4 border-neutral-800 shadow-2xl flex items-center justify-center ${isPlaying ? 'animate-spin-slow' : 'paused'}`}>
+          <div className={`relative w-44 h-44 sm:w-56 sm:h-56 md:w-80 md:h-80 rounded-full bg-neutral-900 border-4 border-neutral-800 shadow-2xl flex items-center justify-center ${isPlaying ? 'animate-spin-slow' : 'paused'}`}>
             {/* Grooves */}
-            <div className="absolute inset-4 rounded-full border border-neutral-700/30" />
-            <div className="absolute inset-10 rounded-full border border-neutral-700/30" />
-            <div className="absolute inset-16 rounded-full border border-neutral-700/30" />
-            <div className="absolute inset-24 rounded-full border border-neutral-700/30" />
+            <div className="absolute inset-3 sm:inset-4 rounded-full border border-neutral-700/30" />
+            <div className="absolute inset-7 sm:inset-10 rounded-full border border-neutral-700/30" />
+            <div className="absolute inset-11 sm:inset-16 rounded-full border border-neutral-700/30" />
+            <div className="absolute inset-16 sm:inset-24 rounded-full border border-neutral-700/30" />
 
             {/* Center Label (Album Artwork) */}
-            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden border-2 border-neutral-900 shadow-inner">
+            <div className="w-20 h-20 sm:w-26 sm:h-26 md:w-36 md:h-36 rounded-full overflow-hidden border-2 border-neutral-900 shadow-inner">
               <img src={track.cover} alt={track.title} className="w-full h-full object-cover" />
             </div>
 
             {/* Spindle Hole */}
-            <div className="absolute w-4 h-4 rounded-full bg-[var(--canvas-bg)] border border-neutral-700" />
+            <div className="absolute w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[var(--canvas-bg)] border border-neutral-700" />
           </div>
 
           {/* Aurora Bilateral Wave Visualizer */}
-          <div className="mt-4 flex flex-col items-center w-full max-w-xs md:max-w-sm">
+          <div className="mt-3 md:mt-4 flex flex-col items-center w-full max-w-[260px] sm:max-w-xs md:max-w-sm">
             <div className="w-full px-3 py-2 rounded-2xl bg-[var(--surface-card)]/80 border border-[var(--border-subtle)] shadow-sm backdrop-blur-sm flex flex-col items-center">
-              <AuroraBilateralWave isPlaying={isPlaying} height={72} positionSec={positionSec} className="w-full" />
+              <AuroraBilateralWave isPlaying={isPlaying} height={60} positionSec={positionSec} className="w-full" />
             </div>
           </div>
 
           {/* Social Sync Bubble (if active) */}
           {isBlendSession && (
-            <div className="mt-3 flex items-center gap-2 bg-[var(--surface-card)] px-4 py-1.5 rounded-full border border-[var(--border-subtle)] shadow-md">
+            <div className="mt-2.5 flex items-center gap-2 bg-[var(--surface-card)] px-3.5 py-1.5 rounded-full border border-[var(--border-subtle)] shadow-md">
               <Sparkles className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
               <span className="text-[11px] font-medium text-[var(--text-primary)]">
                 Syncing with {blendParticipants.slice(1).join(', ')}
@@ -220,7 +210,7 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
         </div>
 
         {/* Right Side: Song Metadata & Real-Time Auto-Scrolling Synced Lyrics */}
-        <div className="flex-1 w-full max-w-lg flex flex-col h-full max-h-[55vh] lg:max-h-[62vh] justify-between gap-3">
+        <div className="flex-1 w-full max-w-lg flex flex-col h-full max-h-[42vh] sm:max-h-[50vh] lg:max-h-[62vh] justify-between gap-3">
           
           {/* Track Header */}
           <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2.5">
@@ -334,22 +324,6 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
               })}
             </div>
           )}
-
-          {/* Interactive Lyrics Reaction & Hints */}
-          <div className="flex items-center justify-between px-2 pt-1">
-            <span className="text-[11px] text-[var(--text-muted)] font-medium">Click any lyric line to jump in song</span>
-            <div className="flex items-center gap-1.5">
-              {['❤️', '🔥', '👏', '✨'].map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => handleSendReaction(emoji)}
-                  className="px-2.5 py-1 rounded-full bg-[var(--surface-card)] hover:bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-xs transition-transform active:scale-125 shadow-sm"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
 
         </div>
 

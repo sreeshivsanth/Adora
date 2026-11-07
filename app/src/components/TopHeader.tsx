@@ -125,18 +125,54 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   };
 
   return (
-    <header className="w-full pt-4 pb-2 px-6 flex flex-col gap-4 select-none z-20">
+    <header className="w-full pt-3 md:pt-4 pb-2 px-3.5 md:px-6 flex flex-col gap-3 md:gap-4 select-none z-20">
       
-      {/* 1. Spacious & Clean Top Bar (Zero Overlap) */}
-      <div className="w-full flex items-center justify-between gap-4">
+      {/* 1. Mobile Brand Top Bar (visible on mobile only, logo moved from left sidebar) */}
+      <div className="flex md:hidden items-center justify-between w-full">
+        <div 
+          className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform"
+          onClick={() => {
+            if (onExecuteSearch) onExecuteSearch('');
+          }}
+        >
+          <img 
+            src="/logo.png" 
+            alt="Adora" 
+            className="w-7 h-7 rounded-full shadow-sm ring-1 ring-[var(--accent-primary)]/40 object-cover" 
+          />
+          <div className="flex items-center gap-1.5">
+            <span className="font-serif font-bold text-base tracking-tight text-[var(--text-primary)]">
+              Adora
+            </span>
+            <span className="text-[9px] font-mono font-semibold px-1.5 py-0.2 rounded-full bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] border border-[var(--accent-primary)]/20 uppercase">
+              Sanctuary
+            </span>
+          </div>
+        </div>
+
+        {/* Mobile Quick Action: Device Picker */}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={onOpenDevicePicker}
+            className="p-2 rounded-full bg-[var(--surface-card)] border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all relative"
+            title="Adora Connect Devices"
+          >
+            <Monitor className="w-4 h-4 text-[var(--accent-primary)]" />
+            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          </button>
+        </div>
+      </div>
+
+      {/* 2. Search & Filter Bar */}
+      <div className="w-full flex items-center justify-between gap-2.5 md:gap-4">
         
-        {/* Left: Clean Search Bar & Filter Toggle Button */}
-        <div className="flex items-center gap-2.5 flex-1 max-w-xl">
+        {/* Search Bar & Filter Toggle Button */}
+        <div className="flex items-center gap-2 md:gap-2.5 flex-1">
           
           {/* Search Input Box with Inside Search Action */}
           <div className="relative flex-1 flex items-center">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--text-muted)]">
-              <Search className="w-4 h-4" />
+            <div className="absolute inset-y-0 left-0 pl-3 md:pl-3.5 flex items-center pointer-events-none text-[var(--text-muted)]">
+              <Search className="w-3.5 h-3.5 md:w-4 md:h-4" />
             </div>
 
             <input
@@ -153,17 +189,17 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               }}
               placeholder={
                 searchMode === 'filter'
-                  ? 'Filtering mode active (type here or press Enter to search)...'
-                  : 'Search songs or artists (Press Enter ↵)...'
+                  ? 'Filter mode active...'
+                  : 'Search songs or artists...'
               }
-              className="w-full pl-10 pr-20 py-2.5 bg-[var(--surface-card)] text-xs md:text-sm rounded-full border border-[var(--border-subtle)] focus:outline-none focus:border-[var(--accent-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all shadow-inner"
+              className="w-full pl-8 md:pl-10 pr-16 md:pr-20 py-2 md:py-2.5 bg-[var(--surface-card)] text-xs md:text-sm rounded-full border border-[var(--border-subtle)] focus:outline-none focus:border-[var(--accent-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-all shadow-inner"
             />
 
             {/* Clear Input Button */}
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-14 pr-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                className="absolute right-12 md:right-14 pr-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 title="Clear input"
               >
                 <X className="w-3.5 h-3.5" />
@@ -174,7 +210,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             <button
               onClick={handleInitiateSearch}
               disabled={isSearching}
-              className="absolute right-1.5 px-3 py-1.5 rounded-full bg-[var(--accent-primary)] text-[var(--canvas-bg)] text-xs font-semibold flex items-center gap-1 shadow-sm hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+              className="absolute right-1 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full bg-[var(--accent-primary)] text-[var(--canvas-bg)] text-[11px] md:text-xs font-semibold flex items-center gap-1 shadow-sm hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
               title="Initiate Search"
             >
               {isSearching ? (
@@ -190,30 +226,30 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           {/* Filters Toggle Button */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`px-3.5 py-2 rounded-full border text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm flex-shrink-0 ${
+            className={`px-3 md:px-3.5 py-2 rounded-full border text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm shrink-0 ${
               showFilters || isFilterActive
                 ? 'bg-[var(--accent-primary)] text-[var(--canvas-bg)] border-[var(--accent-primary)]'
                 : 'bg-[var(--surface-card)] text-[var(--text-muted)] border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
             }`}
             title="Toggle Relaxed Filters Panel"
           >
-            <SlidersHorizontal className="w-4 h-4" />
-            <span>Filters</span>
+            <SlidersHorizontal className="w-3.5 h-3.5 md:w-4 md:h-4" />
+            <span className="text-xs">Filters</span>
             {isFilterActive && (
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             )}
           </button>
         </div>
 
-        {/* Right Controls: Device & Settings */}
-        <div className="flex items-center gap-2.5 flex-shrink-0">
+        {/* Desktop-Only Right Controls: Connected Device Pill & Settings */}
+        <div className="hidden md:flex items-center gap-2.5 shrink-0">
           <button
             onClick={onOpenDevicePicker}
             className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-[var(--surface-card)] border border-[var(--border-subtle)] hover:border-[var(--accent-primary)] text-xs text-[var(--text-primary)] transition-all shadow-sm"
             title="Adora Connect Devices"
           >
             <Monitor className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
-            <span className="hidden sm:inline font-medium">
+            <span className="font-medium">
               {activeDevice ? activeDevice.deviceName : 'This Device'}
             </span>
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -238,9 +274,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         </div>
       </div>
 
-      {/* 2. Relaxed, Elegant Filters Panel */}
+      {/* 3. Relaxed Filters Panel */}
       {showFilters && (
-        <div className="p-6 rounded-3xl bg-[var(--surface-card)] border border-[var(--border-subtle)] shadow-2xl flex flex-col gap-6 animate-fadeIn transition-all">
+        <div className="p-4 md:p-6 rounded-2xl md:rounded-3xl bg-[var(--surface-card)] border border-[var(--border-subtle)] shadow-2xl flex flex-col gap-4 md:gap-6 animate-fadeIn transition-all max-h-[70vh] overflow-y-auto">
           
           {/* Panel Top: Relaxed Search Mode Switcher */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-[var(--border-subtle)]">

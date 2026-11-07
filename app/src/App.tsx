@@ -237,7 +237,7 @@ const DEFAULT_PLAYLISTS: Playlist[] = [
     id: 'pl_chill',
     name: 'Late Night Flow',
     description: 'Acoustic & lo-fi calm for study and relaxation',
-    coverUrl: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/cf/c5/9b/cfc59b20-dda2-e4a3-54db-e23ac7a55b80/cover.jpg/600x600bb.jpg',
+    coverUrl: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=600&auto=format&fit=crop&q=80',
     trackIds: ['itunes_1556858076', 'itunes_1440857781', 'itunes_1660603593'],
     createdAt: Date.now() - 86400000 * 5,
     updatedAt: Date.now()
@@ -1212,7 +1212,7 @@ export default function App() {
           />
         ) : currentTab === 'vault' ? (
           /* DEDICATED VAULT SHOWCASE */
-          <main className="flex-1 overflow-y-auto px-6 pt-4 pb-32 flex flex-col gap-6 max-w-6xl w-full mx-auto animate-fadeIn">
+          <main className="flex-1 overflow-y-auto px-3.5 md:px-6 pt-3 md:pt-4 pb-44 md:pb-32 flex flex-col gap-5 md:gap-6 max-w-6xl w-full mx-auto animate-fadeIn">
             {/* Vault Showcase Header Banner */}
             <div className="p-6 md:p-8 rounded-3xl bg-[var(--surface-card)] border border-[var(--border-subtle)] shadow-sm flex flex-col gap-5">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1316,7 +1316,7 @@ export default function App() {
             )}
           </main>
         ) : (
-          <main className="flex-1 overflow-y-auto px-6 pt-2 pb-32 flex flex-col gap-8 max-w-6xl w-full mx-auto">
+          <main className="flex-1 overflow-y-auto px-3.5 md:px-6 pt-2 pb-44 md:pb-32 flex flex-col gap-6 md:gap-8 max-w-6xl w-full mx-auto">
           
           {/* VIEW A: Active Playlist View (When clicked from Home) */}
           {activePlaylist ? (
@@ -1439,14 +1439,25 @@ export default function App() {
                         onClick={() => setActivePlaylistId(pl.id)}
                         className="group relative rounded-2xl p-3.5 bg-[var(--surface-card)] hover:bg-[var(--surface-hover)] border border-[var(--border-subtle)] hover:border-[var(--accent-primary)]/40 transition-all cursor-pointer shadow-sm flex flex-col gap-3"
                       >
-                        <div className="w-full aspect-square rounded-xl overflow-hidden relative shadow-md">
+                        <div className="w-full aspect-square rounded-xl overflow-hidden relative shadow-md bg-[var(--surface-hover)]">
                           {pl.coverUrl ? (
-                            <img src={pl.coverUrl} alt={pl.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                          ) : (
-                            <div className="w-full h-full bg-[var(--surface-hover)] flex items-center justify-center text-[var(--text-muted)]">
-                              <Music className="w-8 h-8" />
-                            </div>
-                          )}
+                            <img 
+                              src={pl.coverUrl} 
+                              alt={pl.name} 
+                              onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = 'none';
+                                const parent = e.currentTarget.parentElement;
+                                if (parent) {
+                                  const fallback = parent.querySelector('.pl-fallback') as HTMLElement;
+                                  if (fallback) fallback.style.display = 'flex';
+                                }
+                              }}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                            />
+                          ) : null}
+                          <div className={`pl-fallback w-full h-full bg-[var(--surface-hover)] flex items-center justify-center text-[var(--text-muted)] ${pl.coverUrl ? 'hidden' : 'flex'}`}>
+                            <Music className="w-8 h-8 opacity-60" />
+                          </div>
 
                           {/* Quick Play Floating Action */}
                           <button

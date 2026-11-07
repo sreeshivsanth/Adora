@@ -1,7 +1,7 @@
 // Adora In-App Auto-Update Checker Service
 // Queries GitHub Releases API to notify users of new versions and allow 1-tap APK/Desktop updates
 
-export const CURRENT_APP_VERSION = '1.0.0';
+export const CURRENT_APP_VERSION = '1.0.11';
 const GITHUB_REPO = 'sreeshivsanth/Adora';
 const DISMISSED_UPDATE_KEY = 'adora_dismissed_update_version';
 

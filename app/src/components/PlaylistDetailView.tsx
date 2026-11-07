@@ -43,7 +43,7 @@ export const PlaylistDetailView: React.FC<PlaylistDetailViewProps> = ({
   const totalMins = Math.floor(totalDurationSec / 60);
 
   return (
-    <div className="w-full flex flex-col gap-6 select-none animate-fadeIn">
+    <div className="w-full flex flex-col gap-5 md:gap-6 select-none animate-fadeIn pb-44 md:pb-32 px-1">
       {/* Top Navigation Back */}
       <div className="flex items-center justify-between">
         <button
