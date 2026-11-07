@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { ZenNavRail } from './components/ZenNavRail';
 import { TopHeader } from './components/TopHeader';
 import { FloatingPlayer } from './components/FloatingPlayer';
@@ -15,7 +15,7 @@ import { UserSettingsModal } from './components/UserSettingsModal';
 import { OnboardingModal } from './components/OnboardingModal';
 import { AppTrendsView } from './components/AppTrendsView';
 import { Track, User, Device, BlendSession, AdminMetrics, Playlist, UserPreferences } from './types';
-import { Sparkles, Radio, CheckCircle, ShieldCheck, Flame, History, FolderPlus, Play, Plus, Music, Disc3, Clock, TrendingUp, Search } from 'lucide-react';
+import { Sparkles, Radio, CheckCircle, ShieldCheck, Flame, History, FolderPlus, Play, Plus, Music, Disc3, Clock, TrendingUp, Search, FolderHeart, Download, Check, HardDrive, RefreshCw } from 'lucide-react';
 import { REGIONS, getRegionByCode } from './data/regions';
 import { searchTracks, requestIngest, fetchLocalTracks, resolveAudioUrl, fetchUserPreferences, saveUserPreferences, fetchUserPlaylists, saveUserPlaylists, fetchTrendingTracks, recordTelemetryPlay } from './services/api';
 
@@ -256,6 +256,28 @@ export default function App() {
   // Audio State & Real HTML5 Audio Element
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [tracks, setTracks] = useState<Track[]>(INITIAL_TRACKS);
+
+  // Offline Vault System (Local Disk Storage + LocalStorage Persistence)
+  const [vaultTracks, setVaultTracks] = useState<Track[]>(() => {
+    try {
+      const saved = localStorage.getItem('adora_vault_tracks');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isSyncingVault, setIsSyncingVault] = useState(false);
+  const [vaultSearchQuery, setVaultSearchQuery] = useState('');
+
+  // Save vaultTracks to localStorage whenever updated
+  useEffect(() => {
+    try {
+      localStorage.setItem('adora_vault_tracks', JSON.stringify(vaultTracks));
+    } catch (e) {
+      console.warn('[Adora Vault LocalStorage Save]', e);
+    }
+  }, [vaultTracks]);
+
   const [currentTrack, setCurrentTrack] = useState<Track | null>(INITIAL_TRACKS[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [positionSec, setPositionSec] = useState(0);
@@ -480,6 +502,77 @@ export default function App() {
     }
   };
 
+  // Fast check if a track is saved inside Offline Vault
+  const isTrackInVault = useCallback((track: Track | null): boolean => {
+    if (!track) return false;
+    const cleanT = (track.title || '').trim().toLowerCase();
+    const cleanA = (track.artist || '').trim().toLowerCase();
+    return vaultTracks.some(v => {
+      if (v.id === track.id) return true;
+      const vt = (v.title || '').trim().toLowerCase();
+      const va = (v.artist || '').trim().toLowerCase();
+      return vt === cleanT && (va.includes(cleanA) || cleanA.includes(va));
+    });
+  }, [vaultTracks]);
+
+  // Sync current playing track download status with vault
+  useEffect(() => {
+    if (currentTrack) {
+      const inVault = isTrackInVault(currentTrack);
+      if (Boolean(currentTrack.isDownloaded) !== inVault) {
+        setCurrentTrack(prev => prev ? { ...prev, isDownloaded: inVault, isLocal: inVault || Boolean(prev.isLocal) } : null);
+      }
+    }
+  }, [vaultTracks, currentTrack?.id, isTrackInVault]);
+
+  // Synchronize Offline Vault from Disk Storage
+  const syncVaultFromDisk = useCallback(async (silent = false) => {
+    setIsSyncingVault(true);
+    try {
+      const res = await fetchLocalTracks(currentUser?.token);
+      if (res && Array.isArray(res.tracks) && res.tracks.length > 0) {
+        setVaultTracks(prev => {
+          const map = new Map<string, Track>();
+          prev.forEach(t => {
+            map.set(t.id, t);
+            map.set(`${t.title.toLowerCase().trim()}::${t.artist.toLowerCase().trim()}`, t);
+          });
+
+          const merged = [...prev];
+          for (const serverTrack of res.tracks) {
+            const key = `${serverTrack.title.toLowerCase().trim()}::${serverTrack.artist.toLowerCase().trim()}`;
+            if (!map.has(serverTrack.id) && !map.has(key)) {
+              const newVaultTrack: Track = {
+                ...serverTrack,
+                isDownloaded: true,
+                isLocal: true
+              };
+              merged.push(newVaultTrack);
+              map.set(serverTrack.id, newVaultTrack);
+              map.set(key, newVaultTrack);
+            }
+          }
+          return merged;
+        });
+        if (!silent) {
+          showToast(`Synced ${res.tracks.length} offline tracks from disk storage`);
+        }
+      } else if (!silent) {
+        showToast('No offline audio files found on disk');
+      }
+    } catch (err) {
+      console.warn('[Adora Disk Sync Error]', err);
+      if (!silent) showToast('Failed to connect to local disk storage');
+    } finally {
+      setIsSyncingVault(false);
+    }
+  }, [currentUser?.token]);
+
+  // Initial load: Sync local downloaded vault from server
+  useEffect(() => {
+    syncVaultFromDisk(true);
+  }, [syncVaultFromDisk]);
+
   // Live Worldwide Music Search supporting Mode A (Query + Filters) & Mode B (Filter Discovery)
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -490,7 +583,12 @@ export default function App() {
         }
         const data = await searchTracks(queryTerm, selectedLanguage, selectedMood, selectedGenre, userPreferences.region || 'IN', currentUser?.token);
         if (data && Array.isArray(data.results)) {
-          setTracks(data.results);
+          // Enrich with vault download status
+          const enriched = data.results.map((t: Track) => ({
+            ...t,
+            isDownloaded: isTrackInVault(t)
+          }));
+          setTracks(enriched);
         }
       } catch (err) {
         console.warn('[Adora Live Search]', err);
@@ -498,7 +596,7 @@ export default function App() {
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, selectedLanguage, selectedMood, selectedGenre, userPreferences.region, currentUser?.token]);
+  }, [searchQuery, selectedLanguage, selectedMood, selectedGenre, userPreferences.region, currentUser?.token, isTrackInVault]);
 
   // Explicit Search Execution (invoked via Enter key or Initiate Search button)
   const handleExecuteSearch = async (overrideQuery?: string) => {
@@ -510,7 +608,11 @@ export default function App() {
       const q = overrideQuery !== undefined ? overrideQuery : searchQuery.trim();
       const data = await searchTracks(q, selectedLanguage, selectedMood, selectedGenre, userPreferences.region || 'IN', currentUser?.token);
       if (data && Array.isArray(data.results)) {
-        setTracks(data.results);
+        const enriched = data.results.map((t: Track) => ({
+          ...t,
+          isDownloaded: isTrackInVault(t)
+        }));
+        setTracks(enriched);
         if (q) {
           showToast(`Found ${data.results.length} songs for "${q}"`);
         } else {
@@ -531,7 +633,11 @@ export default function App() {
     fetchTrendingTracks(userPreferences.preferredLanguages, userPreferences.region || 'IN', userPreferences.state, currentUser?.token)
       .then(res => {
         if (active && res && Array.isArray(res.results)) {
-          setTrendingTracks(res.results);
+          const enriched = res.results.map((t: Track) => ({
+            ...t,
+            isDownloaded: isTrackInVault(t)
+          }));
+          setTrendingTracks(enriched);
         }
       })
       .catch(err => {
@@ -539,22 +645,7 @@ export default function App() {
       });
 
     return () => { active = false; };
-  }, [userPreferences.preferredLanguages, userPreferences.region, userPreferences.state, currentUser?.token]);
-
-  // Initial load: Fetch local downloaded library from server
-  useEffect(() => {
-    fetchLocalTracks(currentUser?.token)
-      .then(res => {
-        if (res && Array.isArray(res.tracks) && res.tracks.length > 0) {
-          setTracks(prev => {
-            const existingIds = new Set(prev.map(t => t.id));
-            const newTracks = res.tracks.filter((t: Track) => !existingIds.has(t.id));
-            return [...newTracks, ...prev];
-          });
-        }
-      })
-      .catch(() => {});
-  }, [currentUser?.token]);
+  }, [userPreferences.preferredLanguages, userPreferences.region, userPreferences.state, currentUser?.token, isTrackInVault]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -566,15 +657,16 @@ export default function App() {
     setIsPlaying(prev => !prev);
   };
 
-  // Master Comprehensive Pool of all tracks across initial catalog, trending, search, and recently played
+  // Master Comprehensive Pool of all tracks across initial catalog, vault, trending, search, and recently played
   const allAvailableTracks = useMemo<Track[]>(() => {
     const map = new Map<string, Track>();
     INITIAL_TRACKS.forEach(t => map.set(t.id, t));
+    vaultTracks.forEach(t => map.set(t.id, t));
     trendingTracks.forEach(t => map.set(t.id, t));
     tracks.forEach(t => map.set(t.id, t));
     recentlyPlayed.forEach(t => map.set(t.id, t));
     return Array.from(map.values());
-  }, [trendingTracks, tracks, recentlyPlayed]);
+  }, [vaultTracks, trendingTracks, tracks, recentlyPlayed]);
 
   // -------------------------------------------------------------
   // Smart Autoplay Algorithm: Determines upcoming track based on mood & taste
@@ -810,24 +902,56 @@ export default function App() {
 
   // Offline Download (Vault) & Server Permanent JIT Ingest
   const handleToggleDownload = (track: Track) => {
-    setTracks(prev => prev.map(t => {
-      if (t.id === track.id) {
-        const isNowDownloaded = !t.isDownloaded;
-        showToast(isNowDownloaded ? 'Queued for Vault download' : 'Removed from Offline Vault');
-        if (isNowDownloaded) {
-          requestIngest({ title: track.title, artist: track.artist, language: track.language }, currentUser?.token)
-            .then(res => {
-              if (res && res.audioUrl) {
-                t.audioUrl = res.audioUrl;
-                t.isLocal = true;
-              }
-            })
-            .catch(e => console.warn('[Adora Download Queue]', e));
-        }
-        return { ...t, isDownloaded: isNowDownloaded };
+    const inVault = isTrackInVault(track);
+
+    if (inVault) {
+      // Remove from Vault
+      setVaultTracks(prev => prev.filter(t => 
+        t.id !== track.id && 
+        !(t.title.toLowerCase().trim() === track.title.toLowerCase().trim() && 
+          (t.artist.toLowerCase().includes(track.artist.toLowerCase().trim()) || track.artist.toLowerCase().includes(t.artist.toLowerCase().trim())))
+      ));
+
+      if (currentTrack && (currentTrack.id === track.id || currentTrack.title.toLowerCase().trim() === track.title.toLowerCase().trim())) {
+        setCurrentTrack(prev => prev ? { ...prev, isDownloaded: false } : null);
       }
-      return t;
-    }));
+
+      setTracks(prev => prev.map(t => (t.id === track.id || t.title.toLowerCase().trim() === track.title.toLowerCase().trim()) ? { ...t, isDownloaded: false } : t));
+      setTrendingTracks(prev => prev.map(t => (t.id === track.id || t.title.toLowerCase().trim() === track.title.toLowerCase().trim()) ? { ...t, isDownloaded: false } : t));
+
+      showToast(`Removed "${track.title}" from Offline Vault`);
+    } else {
+      // Add to Vault
+      const newDownloadedTrack: Track = {
+        ...track,
+        isDownloaded: true,
+        isLocal: true
+      };
+
+      setVaultTracks(prev => [newDownloadedTrack, ...prev.filter(t => 
+        t.id !== track.id && 
+        !(t.title.toLowerCase().trim() === track.title.toLowerCase().trim() && 
+          (t.artist.toLowerCase().includes(track.artist.toLowerCase().trim()) || track.artist.toLowerCase().includes(t.artist.toLowerCase().trim())))
+      )]);
+
+      if (currentTrack && (currentTrack.id === track.id || currentTrack.title.toLowerCase().trim() === track.title.toLowerCase().trim())) {
+        setCurrentTrack(prev => prev ? { ...prev, isDownloaded: true, isLocal: true } : null);
+      }
+
+      setTracks(prev => prev.map(t => (t.id === track.id || t.title.toLowerCase().trim() === track.title.toLowerCase().trim()) ? { ...t, isDownloaded: true, isLocal: true } : t));
+      setTrendingTracks(prev => prev.map(t => (t.id === track.id || t.title.toLowerCase().trim() === track.title.toLowerCase().trim()) ? { ...t, isDownloaded: true, isLocal: true } : t));
+
+      showToast(`Saved "${track.title}" to Offline Vault`);
+
+      // Request server to ingest into server/music/vault/
+      requestIngest({ title: track.title, artist: track.artist, language: track.language }, currentUser?.token)
+        .then(res => {
+          if (res && res.audioUrl) {
+            setVaultTracks(prev => prev.map(t => (t.id === track.id || t.title.toLowerCase().trim() === track.title.toLowerCase().trim()) ? { ...t, audioUrl: res.audioUrl, isLocal: true } : t));
+          }
+        })
+        .catch(e => console.warn('[Adora Ingestion Trigger]', e));
+    }
   };
 
   // JIT Ingestion Save
@@ -859,16 +983,24 @@ export default function App() {
     showToast('Left Sync room');
   };
 
+  // Vault storage metrics calculation
+  const totalVaultMB = useMemo(() => {
+    const bytes = vaultTracks.reduce((acc, t) => acc + (t.sizeBytes || 6500000), 0);
+    return (bytes / (1024 * 1024)).toFixed(1);
+  }, [vaultTracks]);
+
   // Filtered tracks with Mood, Language, and Release Year Range support
   const filteredTracks = useMemo(() => {
     // 1. Vault tab filter
     if (currentTab === 'vault') {
-      return tracks.filter(t => {
-        const matchesQuery = !searchQuery || 
-          t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-          t.artist.toLowerCase().includes(searchQuery.toLowerCase());
-        return (t.isStarred || t.isDownloaded) && matchesQuery;
-      });
+      const q = (vaultSearchQuery || searchQuery).trim().toLowerCase();
+      if (!q) return vaultTracks;
+      return vaultTracks.filter(t => 
+        t.title.toLowerCase().includes(q) || 
+        t.artist.toLowerCase().includes(q) || 
+        (t.album && t.album.toLowerCase().includes(q)) ||
+        (t.language && t.language.toLowerCase().includes(q))
+      );
     }
 
     // 2. Active Search / Filter Discovery mode
@@ -913,7 +1045,7 @@ export default function App() {
 
       return true;
     });
-  }, [tracks, currentTab, isSearchActive, searchQuery, selectedLanguage, selectedMood, selectedGenre, selectedYearRange]);
+  }, [tracks, vaultTracks, currentTab, isSearchActive, searchQuery, vaultSearchQuery, selectedLanguage, selectedMood, selectedGenre, selectedYearRange]);
 
   // Active playlist resolution if user clicked a playlist
   const activePlaylist = useMemo(() => {
@@ -970,6 +1102,7 @@ export default function App() {
         currentUser={currentUser}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        vaultCount={vaultTracks.length}
       />
 
       {/* Main Sanctuary Area */}
@@ -1006,8 +1139,115 @@ export default function App() {
             onAddToQueue={handleAddToQueue}
             onAddToPlaylist={(track) => setPlaylistTrackToAdd(track)}
             onToggleStar={handleToggleFavorite}
+            onToggleDownload={handleToggleDownload}
+            isDownloaded={isTrackInVault}
             token={currentUser?.token}
           />
+        ) : currentTab === 'vault' ? (
+          /* DEDICATED VAULT SHOWCASE */
+          <main className="flex-1 overflow-y-auto px-6 pt-4 pb-32 flex flex-col gap-6 max-w-6xl w-full mx-auto animate-fadeIn">
+            {/* Vault Showcase Header Banner */}
+            <div className="p-6 md:p-8 rounded-3xl bg-[var(--surface-card)] border border-[var(--border-subtle)] shadow-sm flex flex-col gap-5">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-4 rounded-2xl bg-[var(--accent-primary)]/15 text-[var(--accent-primary)] shadow-sm">
+                    <FolderHeart className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h1 className="text-2xl md:text-3xl font-bold font-serif text-[var(--text-primary)]">
+                        The Offline Vault
+                      </h1>
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-semibold flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5" /> 100% Offline Ready
+                      </span>
+                    </div>
+                    <p className="text-xs text-[var(--text-muted)] mt-1 max-w-xl">
+                      Local permanent storage • 320kbps audio files saved on this machine • Zero network latency • Immune from pruning
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-start md:self-auto">
+                  <button
+                    onClick={() => syncVaultFromDisk(false)}
+                    disabled={isSyncingVault}
+                    className="px-4 py-2 rounded-full bg-[var(--surface-hover)] hover:bg-[var(--accent-primary)] hover:text-white border border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-primary)] flex items-center gap-2 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                    title="Rescan and refresh local music directory on disk"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isSyncingVault ? 'animate-spin' : ''}`} />
+                    <span>{isSyncingVault ? 'Scanning Disk...' : 'Sync Disk Storage'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Stats Bar */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-4 border-t border-[var(--border-subtle)]">
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--surface-hover)]/60">
+                  <Music className="w-4 h-4 text-[var(--accent-primary)]" />
+                  <div>
+                    <span className="text-[11px] text-[var(--text-muted)] block">Vault Tracks</span>
+                    <span className="text-sm font-bold font-mono text-[var(--text-primary)]">{vaultTracks.length} Songs</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--surface-hover)]/60">
+                  <HardDrive className="w-4 h-4 text-emerald-400" />
+                  <div>
+                    <span className="text-[11px] text-[var(--text-muted)] block">Disk Storage Used</span>
+                    <span className="text-sm font-bold font-mono text-[var(--text-primary)]">~{totalVaultMB} MB</span>
+                  </div>
+                </div>
+
+                <div className="hidden sm:flex items-center gap-3 p-3 rounded-2xl bg-[var(--surface-hover)]/60">
+                  <ShieldCheck className="w-4 h-4 text-amber-400" />
+                  <div>
+                    <span className="text-[11px] text-[var(--text-muted)] block">Pruning Protection</span>
+                    <span className="text-sm font-bold text-[var(--text-primary)]">Permanent Safe</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Vault Content / Track List */}
+            {filteredTracks.length === 0 ? (
+              <div className="p-12 rounded-3xl bg-[var(--surface-card)]/50 border border-dashed border-[var(--border-subtle)] flex flex-col items-center justify-center text-center gap-3">
+                <div className="p-4 rounded-full bg-[var(--surface-hover)] text-[var(--text-muted)]">
+                  <FolderHeart className="w-8 h-8" />
+                </div>
+                <h3 className="text-base font-bold text-[var(--text-primary)]">
+                  {searchQuery.trim() ? `No vault songs matching "${searchQuery.trim()}"` : 'Your Offline Vault is Empty'}
+                </h3>
+                <p className="text-xs text-[var(--text-muted)] max-w-md">
+                  {searchQuery.trim()
+                    ? 'Try searching with another song title or artist name.'
+                    : 'Download any song from the discovery feed, trending charts, or player by clicking the download icon.'}
+                </p>
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setCurrentTab('studio');
+                  }}
+                  className="mt-2 px-5 py-2.5 rounded-full bg-[var(--accent-primary)] text-[var(--canvas-bg)] text-xs font-semibold shadow-md hover:scale-105 active:scale-95 transition-all"
+                >
+                  Browse & Discover Music
+                </button>
+              </div>
+            ) : (
+              <TrackList
+                tracks={filteredTracks}
+                currentTrack={currentTrack}
+                isPlaying={isPlaying}
+                onSelectTrack={handleSelectTrack}
+                onToggleFavorite={handleToggleFavorite}
+                onToggleDownload={handleToggleDownload}
+                onAddToQueue={handleAddToQueue}
+                onAddToPlaylist={(track) => setPlaylistTrackToAdd(track)}
+                title="Downloaded & Saved in Offline Vault"
+                subtitle="All songs below are stored locally and play instantly without internet"
+              />
+            )}
+          </main>
         ) : (
           <main className="flex-1 overflow-y-auto px-6 pt-2 pb-32 flex flex-col gap-8 max-w-6xl w-full mx-auto">
           
@@ -1235,24 +1475,46 @@ export default function App() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                    {trendingTracks.map((track) => (
-                      <div
-                        key={`trend_${track.id}`}
-                        onClick={() => handleSelectTrack(track)}
-                        className="p-2.5 rounded-2xl bg-[var(--surface-card)] hover:bg-[var(--surface-hover)] border border-[var(--border-subtle)] flex items-center justify-between gap-3 cursor-pointer group transition-all"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-11 h-11 rounded-xl overflow-hidden shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform">
-                            <img src={track.cover} alt={track.title} className="w-full h-full object-cover" />
+                    {trendingTracks.map((track) => {
+                      const downloaded = isTrackInVault(track);
+                      return (
+                        <div
+                          key={`trend_${track.id}`}
+                          onClick={() => handleSelectTrack(track)}
+                          className="p-2.5 rounded-2xl bg-[var(--surface-card)] hover:bg-[var(--surface-hover)] border border-[var(--border-subtle)] flex items-center justify-between gap-3 cursor-pointer group transition-all"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-11 h-11 rounded-xl overflow-hidden shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform">
+                              <img src={track.cover} alt={track.title} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="min-w-0">
+                              <h5 className="text-xs font-bold text-[var(--text-primary)] truncate">{track.title}</h5>
+                              <p className="text-[11px] text-[var(--text-muted)] truncate">{track.artist}</p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <h5 className="text-xs font-bold text-[var(--text-primary)] truncate">{track.title}</h5>
-                            <p className="text-[11px] text-[var(--text-muted)] truncate">{track.artist}</p>
+                          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => handleToggleDownload(track)}
+                              className={`p-1.5 rounded-full transition-colors ${
+                                downloaded
+                                  ? 'text-emerald-500 bg-emerald-500/10'
+                                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
+                              }`}
+                              title={downloaded ? "Saved in Offline Vault" : "Download to Offline Vault"}
+                            >
+                              {downloaded ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Download className="w-3.5 h-3.5" />}
+                            </button>
+                            <button
+                              onClick={() => handleSelectTrack(track)}
+                              className="p-1.5 rounded-full text-[var(--accent-primary)] opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Play"
+                            >
+                              <Play className="w-3.5 h-3.5 fill-current" />
+                            </button>
                           </div>
                         </div>
-                        <Play className="w-3.5 h-3.5 text-[var(--accent-primary)] opacity-0 group-hover:opacity-100 transition-opacity fill-current mr-2" />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1269,9 +1531,7 @@ export default function App() {
                 onAddToQueue={handleAddToQueue}
                 onAddToPlaylist={(track) => setPlaylistTrackToAdd(track)}
                 title={
-                  currentTab === 'vault' 
-                    ? "The Vault (Your Starred & Downloaded Music)" 
-                    : searchQuery 
+                  searchQuery 
                     ? `Search Results for "${searchQuery}"`
                     : (selectedMood !== 'all' || selectedGenre !== 'all')
                     ? `Filter Discovery Mode (${filteredTracks.length} Matching Songs)`
@@ -1379,6 +1639,7 @@ export default function App() {
           onSeek={handleSeek}
           onFastForward={() => handleFastForward(10)}
           onRewind={() => handleRewind(10)}
+          onToggleDownload={handleToggleDownload}
           isBlendSession={Boolean(syncSession)}
         />
       )}

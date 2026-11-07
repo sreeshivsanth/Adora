@@ -1049,8 +1049,139 @@ app.get('/api/stream', (req: Request, res: Response) => {
   streamLocalFile(resolvedPath, req, res);
 });
 
+// Master Curated Seed List for enriching local scans with authentic artwork and metadata
+const KNOWN_TRACK_METADATA: any[] = [
+  ...Object.values(CURATED_SEED).flat(),
+  {
+    title: 'Pesamale',
+    artist: 'Siri Xander & Arra Aria Khayal',
+    album: 'Pesamale - Single',
+    language: 'tamil',
+    durationSec: 215,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/b9/a2/29/b9a229a9-3075-813c-70e9-b5f70bb2b3fa/198015383921.jpg/600x600bb.jpg',
+    mood: 'romantic',
+    genre: 'Indie'
+  },
+  {
+    title: 'Rathinamo',
+    artist: 'Saurav Srisan',
+    album: 'Rathinamo - Single',
+    language: 'tamil',
+    durationSec: 198,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/bf/20/82/bf2082f4-85fc-3e5f-bce6-38fbdbfeff80/cover.jpg/600x600bb.jpg',
+    mood: 'romantic',
+    genre: 'Indie'
+  },
+  {
+    title: 'Rathinamo (Female Version)',
+    artist: 'Saurav Srisan & Tanisha Gnanavel',
+    album: 'Rathinamo (Female Version) - Single',
+    language: 'tamil',
+    durationSec: 184,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/bf/20/82/bf2082f4-85fc-3e5f-bce6-38fbdbfeff80/cover.jpg/600x600bb.jpg',
+    mood: 'romantic',
+    genre: 'Indie'
+  },
+  {
+    title: 'Magale',
+    artist: 'Sai Abhyankkar, Harini & Karthik Netha',
+    album: 'Magale (From "Baththa") - Single',
+    language: 'tamil',
+    durationSec: 242,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/28/77/92/28779261-2ef3-5da5-c052-1f3ca56a73a3/8903431988942_cover.jpg/600x600bb.jpg',
+    mood: 'chill',
+    genre: 'Soundtrack'
+  },
+  {
+    title: 'Winning Speech',
+    artist: 'Karan Aujla & MXRCI',
+    album: 'Four You - EP',
+    language: 'punjabi',
+    durationSec: 192,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/09/b7/d8/09b7d879-1153-6ec0-98d9-3cb3d9501c40/197188701826.jpg/600x600bb.jpg',
+    mood: 'motivation',
+    genre: 'Hip-Hop'
+  },
+  {
+    title: 'Softly',
+    artist: 'Karan Aujla & Ikky',
+    album: 'Making Memories',
+    language: 'punjabi',
+    durationSec: 156,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/55/be/7a/55be7ab4-c8c3-324c-b56f-8a032899f8be/197188737214.jpg/600x600bb.jpg',
+    mood: 'chill',
+    genre: 'Pop'
+  },
+  {
+    title: 'Dil Nu',
+    artist: 'AP Dhillon & Shinda Kahlon',
+    album: 'Hidden Gems',
+    language: 'punjabi',
+    durationSec: 218,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/c2/f7/e8/c2f7e8ba-e070-df15-d72b-8aa658a8f4c2/859751079311_cover.jpg/600x600bb.jpg',
+    mood: 'chill',
+    genre: 'Pop'
+  },
+  {
+    title: '9:45',
+    artist: 'Prabh Singh & Jay Trak',
+    album: '9:45 - Single',
+    language: 'punjabi',
+    durationSec: 145,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/e0/f8/bf/e0f8bf45-fc86-6ae8-0c67-6f0f5bca94cf/cover.jpg/600x600bb.jpg',
+    mood: 'energetic',
+    genre: 'Hip-Hop'
+  },
+  {
+    title: 'Nenjame',
+    artist: 'Anirudh Ravichander',
+    album: 'Doctor (Original Motion Picture Soundtrack)',
+    language: 'tamil',
+    durationSec: 256,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/b6/88/9e/b6889ea6-154b-3669-2d4c-05dcf4957bdb/886448724513.jpg/600x600bb.jpg',
+    mood: 'sad',
+    genre: 'Soundtrack'
+  },
+  {
+    title: 'Agar Tum Saath Ho',
+    artist: 'Alka Yagnik & Arijit Singh',
+    album: 'Tamasha',
+    language: 'hindi',
+    durationSec: 341,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/cb/ac/67/cbac673a-9213-7118-bb4e-2440273afb03/8902894357470_cover.jpg/600x600bb.jpg',
+    mood: 'sad',
+    genre: 'Bollywood'
+  },
+  {
+    title: 'Someone Like You',
+    artist: 'Adele',
+    album: '21',
+    language: 'english',
+    durationSec: 285,
+    cover: 'https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/eb/ca/25/ebca2596-cd1e-b295-91a3-771c868d0a79/191404113868.png/600x600bb.jpg',
+    mood: 'breakup',
+    genre: 'Pop'
+  }
+];
+
 app.get('/api/tracks/local', (_req: Request, res: Response) => {
-  const localTracks: any[] = [];
+  const scannedMap = new Map<string, any>();
+
+  function normalizeTitle(raw: string): string {
+    let t = raw.replace(/\.[^/.]+$/, "");
+    t = t.replace(/_Female Version_/i, ' (Female Version)');
+    t = t.replace(/_From _[A-Za-z0-9]+__/i, '');
+    t = t.replace(/9_45/g, '9:45');
+    t = t.replace(/_/g, ' ');
+    t = t.replace(/\s+/g, ' ').trim();
+    return t;
+  }
+
+  function normalizeArtist(raw: string): string {
+    let a = raw.replace(/_/g, ' ');
+    a = a.replace(/\s+/g, ' ').trim();
+    return a;
+  }
 
   function scanDir(dir: string, category: string = 'Vault') {
     if (!fs.existsSync(dir)) return;
@@ -1061,27 +1192,55 @@ app.get('/api/tracks/local', (_req: Request, res: Response) => {
         scanDir(fullPath, entry.name);
       } else if (/\.(mp3|m4a|opus|flac)$/i.test(entry.name)) {
         const relPath = path.relative(MUSIC_DIR, fullPath);
-        const fileNameWithoutExt = entry.name.replace(/\.[^/.]+$/, "");
         const stat = fs.statSync(fullPath);
-        localTracks.push({
+        const normTitle = normalizeTitle(entry.name);
+        const normArtist = normalizeArtist(category || 'Adora Vault');
+        const key = normTitle.toLowerCase();
+
+        // Check if we have authentic metadata in KNOWN_TRACK_METADATA
+        const matched = KNOWN_TRACK_METADATA.find(k => {
+          const kt = k.title.toLowerCase();
+          return kt === key || key.includes(kt) || kt.includes(key);
+        });
+
+        // Determine language from folder or metadata
+        const parts = relPath.split(path.sep);
+        const folderLang = parts.length > 1 && parts[0] !== 'vault' ? parts[0] : (matched?.language || 'all');
+
+        const trackObj = {
           id: `local_${Buffer.from(relPath).toString('base64url')}`,
-          title: fileNameWithoutExt,
-          artist: category || 'Adora Vault',
-          album: 'Self-Hosted Library',
-          language: 'all',
-          durationSec: 240,
-          cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600',
+          title: matched?.title || normTitle,
+          artist: matched?.artist || normArtist,
+          album: matched?.album || 'Self-Hosted Vault',
+          language: matched?.language || folderLang,
+          durationSec: matched?.durationSec || 240,
+          cover: matched?.cover || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600',
           audioUrl: `/api/stream?path=${encodeURIComponent(relPath)}`,
           isLocal: true,
           isDownloaded: true,
-          sizeBytes: stat.size
-        });
+          sizeBytes: stat.size,
+          mood: matched?.mood || 'chill',
+          genre: matched?.genre || 'Soundtrack'
+        };
+
+        // Prefer tracks matched with authentic metadata or from vault
+        if (!scannedMap.has(key)) {
+          scannedMap.set(key, trackObj);
+        } else {
+          const existing = scannedMap.get(key);
+          if (!existing.cover.includes('mzstatic') && trackObj.cover.includes('mzstatic')) {
+            scannedMap.set(key, trackObj);
+          } else if (relPath.startsWith('vault' + path.sep)) {
+            scannedMap.set(key, trackObj);
+          }
+        }
       }
     }
   }
 
   scanDir(MUSIC_DIR);
-  res.json({ tracks: localTracks, count: localTracks.length });
+  const deduplicatedTracks = Array.from(scannedMap.values());
+  res.json({ tracks: deduplicatedTracks, count: deduplicatedTracks.length });
 });
 
 // -------------------------------------------------------------

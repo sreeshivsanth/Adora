@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Minimize2, Play, Pause, SkipBack, SkipForward, RotateCcw, RotateCw, Sparkles, Heart, Activity, Music, Mic2, AlertCircle } from 'lucide-react';
+import { Minimize2, Play, Pause, SkipBack, SkipForward, RotateCcw, RotateCw, Sparkles, Heart, Activity, Music, Mic2, AlertCircle, Download, Check } from 'lucide-react';
 import { Track } from '../types';
 import { LyricLine } from '../data/lyrics';
 import { AuroraBilateralWave } from './AuroraBilateralWave';
@@ -18,6 +18,7 @@ interface LivingRoomModeProps {
   onSeek?: (pos: number) => void;
   onFastForward?: () => void;
   onRewind?: () => void;
+  onToggleDownload?: (track: Track) => void;
   isBlendSession?: boolean;
   blendParticipants?: string[];
 }
@@ -34,6 +35,7 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
   onSeek,
   onFastForward,
   onRewind,
+  onToggleDownload,
   isBlendSession = false,
   blendParticipants = ['You', 'Aarav', 'Maya']
 }) => {
@@ -246,13 +248,28 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
                 {track.artist} — {track.album}
               </p>
             </div>
-            <button 
-              onClick={() => setIsFavorited(!isFavorited)}
-              className="text-[var(--accent-primary)] hover:scale-110 transition-transform p-2 rounded-full hover:bg-[var(--surface-hover)]"
-              title="Add to Sanctuary Favorites"
-            >
-              <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current text-rose-500' : ''}`} />
-            </button>
+            <div className="flex items-center gap-1.5">
+              {onToggleDownload && (
+                <button
+                  onClick={() => onToggleDownload(track)}
+                  className={`p-2 rounded-full transition-all hover:scale-110 ${
+                    track.isDownloaded
+                      ? 'text-emerald-400 bg-emerald-500/15 border border-emerald-500/30'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
+                  }`}
+                  title={track.isDownloaded ? "Saved in Offline Vault" : "Download to Offline Vault"}
+                >
+                  {track.isDownloaded ? <Check className="w-5 h-5 text-emerald-400" /> : <Download className="w-5 h-5" />}
+                </button>
+              )}
+              <button 
+                onClick={() => setIsFavorited(!isFavorited)}
+                className="text-[var(--accent-primary)] hover:scale-110 transition-transform p-2 rounded-full hover:bg-[var(--surface-hover)]"
+                title="Add to Sanctuary Favorites"
+              >
+                <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current text-rose-500' : ''}`} />
+              </button>
+            </div>
           </div>
 
           {/* Live Auto-Scrolling Synced Lyrics Container / Loading / Empty State */}

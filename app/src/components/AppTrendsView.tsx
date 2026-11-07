@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, Play, Pause, Flame, Trophy, Sparkles, Music, 
-  BarChart3, RefreshCw, Plus, Heart, Radio, Disc3, Clock 
+  BarChart3, RefreshCw, Plus, Heart, Radio, Disc3, Clock,
+  Download, Check
 } from 'lucide-react';
 import { Track } from '../types';
 import { fetchTelemetryTrends } from '../services/api';
@@ -14,6 +15,8 @@ interface AppTrendsViewProps {
   onAddToQueue: (track: Track) => void;
   onAddToPlaylist: (track: Track) => void;
   onToggleStar: (trackId: string) => void;
+  onToggleDownload?: (track: Track) => void;
+  isDownloaded?: (track: Track) => boolean;
   token?: string;
 }
 
@@ -25,6 +28,8 @@ export const AppTrendsView: React.FC<AppTrendsViewProps> = ({
   onAddToQueue,
   onAddToPlaylist,
   onToggleStar,
+  onToggleDownload,
+  isDownloaded,
   token
 }) => {
   const [trendsData, setTrendsData] = useState<any>(null);
@@ -280,6 +285,19 @@ export const AppTrendsView: React.FC<AppTrendsViewProps> = ({
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                      {onToggleDownload && (
+                        <button
+                          onClick={() => onToggleDownload(track)}
+                          className={`p-1.5 rounded-full transition-colors ${
+                            (isDownloaded ? isDownloaded(track) : track.isDownloaded)
+                              ? 'text-emerald-500 bg-emerald-500/10'
+                              : 'hover:bg-[var(--surface-card)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                          }`}
+                          title={(isDownloaded ? isDownloaded(track) : track.isDownloaded) ? "Saved in Offline Vault" : "Download to Offline Vault"}
+                        >
+                          {(isDownloaded ? isDownloaded(track) : track.isDownloaded) ? <Check className="w-4 h-4 text-emerald-500" /> : <Download className="w-4 h-4" />}
+                        </button>
+                      )}
                       <button
                         onClick={() => onAddToQueue(track)}
                         className="p-1.5 rounded-full hover:bg-[var(--surface-card)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"

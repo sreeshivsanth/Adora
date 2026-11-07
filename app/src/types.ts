@@ -14,6 +14,7 @@ export interface Track {
   releaseYear?: number;
   mood?: string;
   genre?: string;
+  sizeBytes?: number;
 }
 
 export interface Playlist {

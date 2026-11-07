@@ -11,6 +11,7 @@ interface ZenNavRailProps {
   currentUser: User | null;
   onOpenAuth: () => void;
   onOpenSettings?: () => void;
+  vaultCount?: number;
 }
 
 export const ZenNavRail: React.FC<ZenNavRailProps> = ({
@@ -21,7 +22,8 @@ export const ZenNavRail: React.FC<ZenNavRailProps> = ({
   setDarkMode,
   currentUser,
   onOpenAuth,
-  onOpenSettings
+  onOpenSettings,
+  vaultCount = 0
 }) => {
   return (
     <aside className="w-16 md:w-20 h-screen flex flex-col items-center py-6 border-r border-[var(--border-subtle)] bg-[var(--surface-card)] transition-colors z-30 select-none">
@@ -56,7 +58,7 @@ export const ZenNavRail: React.FC<ZenNavRailProps> = ({
 
         <button
           onClick={() => setCurrentTab('vault')}
-          className={`p-3 rounded-2xl transition-all flex flex-col items-center gap-1 ${
+          className={`p-3 rounded-2xl transition-all flex flex-col items-center gap-1 relative ${
             currentTab === 'vault'
               ? 'bg-[var(--accent-primary)] text-[var(--canvas-bg)] shadow-sm'
               : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
@@ -65,6 +67,15 @@ export const ZenNavRail: React.FC<ZenNavRailProps> = ({
         >
           <FolderHeart className="w-5 h-5" />
           <span className="text-[10px] font-medium hidden md:inline">Vault</span>
+          {vaultCount > 0 && (
+            <span className={`absolute -top-1 -right-1 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full ${
+              currentTab === 'vault'
+                ? 'bg-[var(--canvas-bg)] text-[var(--accent-primary)]'
+                : 'bg-[var(--accent-primary)] text-[var(--canvas-bg)]'
+            } shadow-sm`}>
+              {vaultCount}
+            </span>
+          )}
         </button>
 
         <button
