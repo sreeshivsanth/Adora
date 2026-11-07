@@ -1,15 +1,18 @@
 import React, { useRef, useEffect } from 'react';
+import { getAudioFrequencies } from '../services/audioVisualizer';
 
 interface AuroraBilateralWaveProps {
   isPlaying: boolean;
   className?: string;
   height?: number;
+  positionSec?: number;
 }
 
 export const AuroraBilateralWave: React.FC<AuroraBilateralWaveProps> = ({
   isPlaying,
   className = '',
-  height = 120
+  height = 120,
+  positionSec
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -21,11 +24,10 @@ export const AuroraBilateralWave: React.FC<AuroraBilateralWaveProps> = ({
 
     let animationFrameId: number;
     let time = 0;
-    let currentAmplitude = isPlaying ? 38 : 6;
-    const targetAmplitude = isPlaying ? 38 : 6;
+    let currentAmplitude = isPlaying ? 32 : 5;
 
-    // Ambient floating particles
-    const particles = Array.from({ length: 14 }, () => ({
+    // Ambient floating stardust particles
+    const particles = Array.from({ length: 16 }, () => ({
       x: Math.random(),
       y: Math.random() * 0.6 + 0.2, // centered around horizon
       size: Math.random() * 2 + 1,
@@ -39,7 +41,7 @@ export const AuroraBilateralWave: React.FC<AuroraBilateralWaveProps> = ({
       const width = canvas.clientWidth;
       const h = canvas.clientHeight;
 
-      // Handle retina displays
+      // Retina display handling
       const dpr = window.devicePixelRatio || 1;
       if (canvas.width !== width * dpr || canvas.height !== h * dpr) {
         canvas.width = width * dpr;
@@ -51,70 +53,91 @@ export const AuroraBilateralWave: React.FC<AuroraBilateralWaveProps> = ({
       ctx.clearRect(0, 0, width, h);
 
       const centerY = h / 2;
-      const sigma = width * 0.26; // Gaussian bell width
+      const sigma = width * 0.28; // Bilateral Gaussian curve spread
 
-      // Smooth decay transition towards target amplitude (450ms spring feel)
-      currentAmplitude += (targetAmplitude - currentAmplitude) * 0.08;
+      // Live Web Audio frequency analysis in sync with the song
+      const audioFreq = getAudioFrequencies();
 
+      let targetAmplitude = 5;
       if (isPlaying) {
-        time += 0.024;
-      } else {
-        time += 0.006; // Slow calm idle drift
+        if (audioFreq.hasRealAudio) {
+          // Real-time audio band: Sub-bass (40-120 Hz) & acoustic warmth
+          targetAmplitude = 16 + (audioFreq.bass * 42) + (audioFreq.mids * 24);
+        } else {
+          // Graceful tempo-synced baseline if audio stream is loading
+          targetAmplitude = 32;
+        }
       }
 
-      // Draw subtle horizon base glow
-      const horizonGrad = ctx.createLinearGradient(0, centerY - 15, 0, centerY + 15);
+      // Smooth 450 ms gentle spring release decay
+      currentAmplitude += (targetAmplitude - currentAmplitude) * 0.12;
+
+      if (isPlaying) {
+        if (audioFreq.hasRealAudio) {
+          time += 0.016 + (audioFreq.overall * 0.038);
+        } else {
+          time += 0.024;
+        }
+      } else {
+        time += 0.005; // Tranquil idle drift
+      }
+
+      // Dynamic sub-bass energy modulation
+      const bassPulse = audioFreq.hasRealAudio
+        ? (audioFreq.bass * 0.65 + audioFreq.mids * 0.3)
+        : (Math.sin(time * 3.2) * 0.16 + Math.cos(time * 1.8) * 0.1);
+
+      const dynamicAmp = currentAmplitude * (1 + bassPulse);
+
+      // 1. Horizon central ambient glow
+      const horizonGlowHeight = Math.max(16, dynamicAmp * 0.6);
+      const horizonGrad = ctx.createLinearGradient(0, centerY - horizonGlowHeight, 0, centerY + horizonGlowHeight);
       horizonGrad.addColorStop(0, 'rgba(94, 168, 161, 0)');
-      horizonGrad.addColorStop(0.5, isPlaying ? 'rgba(94, 168, 161, 0.2)' : 'rgba(94, 168, 161, 0.08)');
+      horizonGrad.addColorStop(0.5, isPlaying 
+        ? `rgba(94, 168, 161, ${0.15 + (audioFreq.hasRealAudio ? audioFreq.bass * 0.25 : 0.05)})` 
+        : 'rgba(94, 168, 161, 0.06)'
+      );
       horizonGrad.addColorStop(1, 'rgba(94, 168, 161, 0)');
       ctx.fillStyle = horizonGrad;
-      ctx.fillRect(0, centerY - 15, width, 30);
+      ctx.fillRect(0, centerY - horizonGlowHeight, width, horizonGlowHeight * 2);
 
-      // Layer definitions (Bilateral mirrored Gaussian harmonic waves)
+      // 2. Multi-layer Bilateral Mirrored Fluid Contours
       const layers = [
         {
-          weight: 0.6,
-          freq1: 0.014,
-          freq2: 0.028,
-          speed1: 1.6,
-          speed2: 1.0,
-          colorInner: 'rgba(94, 168, 161, 0.45)',
-          colorOuter: 'rgba(14, 22, 25, 0.1)',
+          weight: 0.6 + (audioFreq.hasRealAudio ? audioFreq.bass * 0.4 : 0),
+          freq1: 0.013,
+          freq2: 0.026,
+          speed1: 1.5,
+          speed2: 0.9,
+          colorInner: 'rgba(94, 168, 161, 0.42)',
+          colorOuter: 'rgba(14, 22, 25, 0.08)',
           stroke: 'rgba(94, 168, 161, 0.85)',
           phase: 0
         },
         {
-          weight: 0.85,
+          weight: 0.85 + (audioFreq.hasRealAudio ? audioFreq.mids * 0.35 : 0),
           freq1: 0.011,
-          freq2: 0.022,
-          speed1: -1.3,
-          speed2: 1.7,
-          colorInner: 'rgba(143, 170, 183, 0.4)',
+          freq2: 0.021,
+          speed1: -1.2,
+          speed2: 1.6,
+          colorInner: 'rgba(143, 170, 183, 0.38)',
           colorOuter: 'rgba(14, 22, 25, 0.05)',
           stroke: 'rgba(143, 170, 183, 0.9)',
           phase: 1.4
         },
         {
-          weight: 1.0,
-          freq1: 0.018,
-          freq2: 0.035,
-          speed1: 2.1,
-          speed2: -1.4,
-          colorInner: 'rgba(94, 168, 161, 0.65)',
-          colorOuter: 'rgba(14, 22, 25, 0.15)',
+          weight: 1.0 + (audioFreq.hasRealAudio ? audioFreq.overall * 0.3 : 0),
+          freq1: 0.017,
+          freq2: 0.034,
+          speed1: 2.0,
+          speed2: -1.3,
+          colorInner: 'rgba(94, 168, 161, 0.62)',
+          colorOuter: 'rgba(14, 22, 25, 0.12)',
           stroke: 'rgba(168, 224, 218, 0.95)',
           phase: 2.8
         }
       ];
 
-      // Dynamic sub-bass breathing pulse
-      const bassEnergy = isPlaying 
-        ? Math.sin(time * 3.2) * 0.18 + Math.cos(time * 1.8) * 0.12 
-        : Math.sin(time * 1.5) * 0.05;
-
-      const dynamicAmp = currentAmplitude * (1 + bassEnergy);
-
-      // Render each bilateral mirrored layer
       layers.forEach((layer) => {
         const step = 4;
         const numPoints = Math.ceil(width / step) + 1;
@@ -157,10 +180,10 @@ export const AuroraBilateralWave: React.FC<AuroraBilateralWaveProps> = ({
         ctx.fillStyle = fillGrad;
         ctx.fill();
 
-        // Draw glowing bilateral top and bottom contour lines
+        // Glowing bilateral top and bottom mirrored contour lines
         ctx.save();
         ctx.shadowColor = '#5EA8A1';
-        ctx.shadowBlur = isPlaying ? 14 : 6;
+        ctx.shadowBlur = isPlaying ? (audioFreq.hasRealAudio ? 12 + audioFreq.bass * 16 : 14) : 6;
         ctx.lineWidth = isPlaying ? 1.5 : 1;
         ctx.strokeStyle = layer.stroke;
 
@@ -183,11 +206,12 @@ export const AuroraBilateralWave: React.FC<AuroraBilateralWaveProps> = ({
         ctx.restore();
       });
 
-      // Render floating subtle ambient particles / stardust
+      // 3. Floating subtle ambient stardust / acoustic particles
+      const particleActivity = isPlaying ? (audioFreq.hasRealAudio ? 1 + audioFreq.bass * 1.5 : 1) : 0.35;
       particles.forEach((p) => {
-        p.x += p.speedX * (isPlaying ? 1 : 0.4);
-        p.y += p.speedY * (isPlaying ? 1 : 0.4);
-        p.pulse += 0.03;
+        p.x += p.speedX * particleActivity;
+        p.y += p.speedY * particleActivity;
+        p.pulse += 0.035 * particleActivity;
 
         if (p.x < 0) p.x = 1;
         if (p.x > 1) p.x = 0;
@@ -196,7 +220,7 @@ export const AuroraBilateralWave: React.FC<AuroraBilateralWaveProps> = ({
 
         const posX = p.x * width;
         const posY = p.y * h;
-        const currentOp = (Math.sin(p.pulse) * 0.3 + 0.7) * p.opacity * (isPlaying ? 1 : 0.4);
+        const currentOp = (Math.sin(p.pulse) * 0.35 + 0.65) * p.opacity * (isPlaying ? 1 : 0.35);
 
         ctx.beginPath();
         ctx.arc(posX, posY, p.size, 0, Math.PI * 2);
@@ -215,7 +239,7 @@ export const AuroraBilateralWave: React.FC<AuroraBilateralWaveProps> = ({
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [isPlaying]);
+  }, [isPlaying, positionSec]);
 
   return (
     <div className={`relative w-full overflow-hidden flex flex-col items-center justify-center select-none ${className}`}>
@@ -227,4 +251,3 @@ export const AuroraBilateralWave: React.FC<AuroraBilateralWaveProps> = ({
     </div>
   );
 };
-

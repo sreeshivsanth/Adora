@@ -18,6 +18,7 @@ import { Track, User, Device, BlendSession, AdminMetrics, Playlist, UserPreferen
 import { Sparkles, Radio, CheckCircle, ShieldCheck, Flame, History, FolderPlus, Play, Plus, Music, Disc3, Clock, TrendingUp, Search, FolderHeart, Download, Check, HardDrive, RefreshCw } from 'lucide-react';
 import { REGIONS, getRegionByCode } from './data/regions';
 import { searchTracks, requestIngest, fetchLocalTracks, resolveAudioUrl, fetchUserPreferences, saveUserPreferences, fetchUserPlaylists, saveUserPlaylists, fetchTrendingTracks, recordTelemetryPlay } from './services/api';
+import { initAudioAnalyser, resumeAudioContext } from './services/audioVisualizer';
 
 const INITIAL_TRACKS: Track[] = [
   {
@@ -287,6 +288,9 @@ export default function App() {
   // Queue System
   const [queue, setQueue] = useState<Track[]>([]);
   const [isQueueOpen, setIsQueueOpen] = useState(false);
+
+  // Playback History Stack (for accurate Previous Track navigation)
+  const [playbackHistory, setPlaybackHistory] = useState<Track[]>([]);
 
   // Playlists System
   const [playlists, setPlaylists] = useState<Playlist[]>(() => {
@@ -654,6 +658,10 @@ export default function App() {
 
   // Playback handlers
   const handleTogglePlay = () => {
+    resumeAudioContext();
+    if (audioRef.current) {
+      initAudioAnalyser(audioRef.current);
+    }
     setIsPlaying(prev => !prev);
   };
 
@@ -750,16 +758,54 @@ export default function App() {
   };
 
   const handlePrev = () => {
-    if (!currentTrack || allAvailableTracks.length === 0) return;
-    const currentIndex = allAvailableTracks.findIndex(t => t.id === currentTrack.id);
-    const prevIndex = (currentIndex - 1 + allAvailableTracks.length) % allAvailableTracks.length;
-    playSongWithHistory(allAvailableTracks[prevIndex]);
+    // 1. Standard player UX: If played more than 3 seconds, restart current track
+    if (audioRef.current && audioRef.current.currentTime > 3) {
+      handleSeek(0);
+      showToast('Restarting current track');
+      return;
+    }
+
+    // 2. Play the exact song that was played previously from playback history stack
+    if (playbackHistory.length > 0) {
+      const prevTrack = playbackHistory[playbackHistory.length - 1];
+      setPlaybackHistory(prev => prev.slice(0, -1));
+      playSongWithHistory(prevTrack, false);
+      showToast(`Playing previous: ${prevTrack.title}`);
+      return;
+    }
+
+    // 3. Fallback: Check recently played list for previously heard track
+    if (recentlyPlayed.length > 1) {
+      const prevRecent = recentlyPlayed[1];
+      if (prevRecent && prevRecent.id !== currentTrack?.id) {
+        playSongWithHistory(prevRecent, false);
+        showToast(`Playing previous: ${prevRecent.title}`);
+        return;
+      }
+    }
+
+    // 4. Default: restart to 0:00
+    handleSeek(0);
   };
 
-  const playSongWithHistory = (track: Track) => {
+  const playSongWithHistory = (track: Track, pushToHistory = true) => {
+    // Push current playing song onto history stack before switching
+    if (pushToHistory && currentTrack && currentTrack.id !== track.id) {
+      setPlaybackHistory(prev => {
+        if (prev.length > 0 && prev[prev.length - 1].id === currentTrack.id) return prev;
+        return [...prev, currentTrack];
+      });
+    }
+
     setCurrentTrack(track);
     setIsPlaying(true);
     setPositionSec(0);
+
+    // Initialize & resume Web Audio analyser on playback
+    resumeAudioContext();
+    if (audioRef.current) {
+      initAudioAnalyser(audioRef.current);
+    }
 
     // Add to Recently Played (max 15 unique)
     setRecentlyPlayed(prev => {
@@ -1058,7 +1104,14 @@ export default function App() {
       {/* Real Audio Player Element */}
       <audio
         ref={audioRef}
+        crossOrigin="anonymous"
         preload="auto"
+        onPlay={() => {
+          resumeAudioContext();
+          if (audioRef.current) {
+            initAudioAnalyser(audioRef.current);
+          }
+        }}
         onLoadedMetadata={handleLoadedMetadata}
         onLoadedData={() => {
           if (isPlaying && audioRef.current && audioRef.current.paused) {

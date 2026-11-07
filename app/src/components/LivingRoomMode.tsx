@@ -206,7 +206,7 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
           {/* OPTION 2: AURORA BILATERAL ENVELOPE (Centered Sound Visualizer) */}
           <div className="mt-4 flex flex-col items-center w-full max-w-xs md:max-w-sm">
             <div className="w-full px-3 py-1.5 rounded-2xl bg-[var(--surface-card)]/80 border border-[var(--border-subtle)] shadow-sm backdrop-blur-sm flex flex-col items-center">
-              <AuroraBilateralWave isPlaying={isPlaying} height={72} className="w-full" />
+              <AuroraBilateralWave isPlaying={isPlaying} height={72} positionSec={positionSec} className="w-full" />
               <div className="w-full flex items-center justify-between px-2 pt-1 border-t border-[var(--border-subtle)]/40 text-[9px] font-mono text-[var(--accent-primary)] opacity-85 uppercase">
                 <span className="flex items-center gap-1.5">
                   <span className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-emerald-400 animate-ping' : 'bg-neutral-500'}`} />
