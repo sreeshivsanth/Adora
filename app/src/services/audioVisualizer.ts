@@ -25,7 +25,7 @@ export function initAudioAnalyser(audioElement: HTMLAudioElement | null): Analys
     if (!sharedAnalyser) {
       sharedAnalyser = sharedAudioCtx.createAnalyser();
       sharedAnalyser.fftSize = 256; // 128 frequency bins for tight real-time response
-      sharedAnalyser.smoothingTimeConstant = 0.75; // gentle, organic spring feel
+      sharedAnalyser.smoothingTimeConstant = 0.88; // high damping for relaxing, silky fluid movement
       freqDataArray = new Uint8Array(new ArrayBuffer(sharedAnalyser.frequencyBinCount));
     }
 
@@ -59,6 +59,7 @@ export interface AudioFrequencyMetrics {
   mids: number;        // Vocal presence & acoustic warmth (250 - 2000 Hz) [0..1]
   treble: number;      // Highs & Air (2000 - 10000 Hz) [0..1]
   overall: number;     // Combined energy [0..1]
+  pitch: number;       // Spectral Centroid pitch [0..1]: 0 = deep low pitch, 1 = high pitch
   hasRealAudio: boolean;
   rawBins?: Uint8Array;
 }
@@ -68,7 +69,7 @@ export interface AudioFrequencyMetrics {
  */
 export function getAudioFrequencies(): AudioFrequencyMetrics {
   if (!sharedAnalyser || !freqDataArray) {
-    return { bass: 0, mids: 0, treble: 0, overall: 0, hasRealAudio: false };
+    return { bass: 0, mids: 0, treble: 0, overall: 0, pitch: 0.35, hasRealAudio: false };
   }
 
   try {
@@ -101,15 +102,56 @@ export function getAudioFrequencies(): AudioFrequencyMetrics {
     const overall = bass * 0.5 + mids * 0.35 + treble * 0.15;
     const hasRealAudio = bass > 0.015 || mids > 0.015 || treble > 0.015;
 
+    // Multi-spectral Pitch Perception (0 = deep low bass, 1 = soaring high pitch)
+    // 1. High-to-Low Harmonic Energy Ratio (vocals & treble vs low-end bass)
+    const lowEnergy = bass * 1.4 + 0.04;
+    const highEnergy = mids * 1.1 + treble * 1.8;
+    const harmonicRatio = Math.min(1, Math.max(0, (highEnergy / (lowEnergy + highEnergy) - 0.15) / 0.7));
+
+    // 2. Peak Melodic Frequency Bin Tracker (locates predominant voice or instrument tone)
+    let peakBin = 2;
+    let peakMag = 0;
+    const vocalMaxBin = Math.min(48, freqDataArray.length);
+    for (let i = 2; i < vocalMaxBin; i++) {
+      if (freqDataArray[i] > peakMag) {
+        peakMag = freqDataArray[i];
+        peakBin = i;
+      }
+    }
+    const peakPitch = Math.min(1, Math.max(0, (peakBin - 2) / 28.0));
+
+    // 3. Spectral Centroid
+    let weightedSum = 0;
+    let totalMagnitude = 0;
+    const maxBin = Math.min(64, freqDataArray.length);
+    for (let i = 0; i < maxBin; i++) {
+      const mag = freqDataArray[i];
+      if (mag > 8) {
+        weightedSum += i * mag;
+        totalMagnitude += mag;
+      }
+    }
+    let centroidPitch = 0.35;
+    if (totalMagnitude > 0) {
+      const rawCentroid = weightedSum / totalMagnitude;
+      centroidPitch = Math.min(1, Math.max(0, (rawCentroid - 1.5) / 16.0));
+    }
+
+    // Dynamic pitch: distinctly separates low pitch (<0.25) from high pitch (>0.65)
+    const pitch = hasRealAudio
+      ? Math.min(1, Math.max(0, harmonicRatio * 0.45 + peakPitch * 0.35 + centroidPitch * 0.20))
+      : 0.35;
+
     return {
       bass,
       mids,
       treble,
       overall,
+      pitch,
       hasRealAudio,
       rawBins: freqDataArray
     };
   } catch {
-    return { bass: 0, mids: 0, treble: 0, overall: 0, hasRealAudio: false };
+    return { bass: 0, mids: 0, treble: 0, overall: 0, pitch: 0.35, hasRealAudio: false };
   }
 }

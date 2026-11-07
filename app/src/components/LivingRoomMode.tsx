@@ -93,8 +93,6 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
     return () => { active = false; };
   }, [track.id, track.title, track.artist, totalDuration]);
 
-  // User sync offset calibration (allows instant manual alignment if audio has extra intro silence)
-  const [syncOffset, setSyncOffset] = useState<number>(0);
 
   // High-frequency animation-frame time tracker for silky-smooth sub-second lyric tracking
   const [smoothTime, setSmoothTime] = useState(positionSec);
@@ -117,8 +115,8 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
     return () => cancelAnimationFrame(raf);
   }, [isPlaying, totalDuration]);
 
-  // Active time with 150ms vocal anticipation and user offset calibration
-  const effectiveTime = Math.max(0, smoothTime + syncOffset + 0.15);
+  // Active time with 150ms vocal anticipation lead
+  const effectiveTime = Math.max(0, smoothTime + 0.15);
 
   // Find currently active lyric line index based on playback position
   let activeIndex = -1;
@@ -203,17 +201,10 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
             <div className="absolute w-4 h-4 rounded-full bg-[var(--canvas-bg)] border border-neutral-700" />
           </div>
 
-          {/* OPTION 2: AURORA BILATERAL ENVELOPE (Centered Sound Visualizer) */}
+          {/* Aurora Bilateral Wave Visualizer */}
           <div className="mt-4 flex flex-col items-center w-full max-w-xs md:max-w-sm">
-            <div className="w-full px-3 py-1.5 rounded-2xl bg-[var(--surface-card)]/80 border border-[var(--border-subtle)] shadow-sm backdrop-blur-sm flex flex-col items-center">
+            <div className="w-full px-3 py-2 rounded-2xl bg-[var(--surface-card)]/80 border border-[var(--border-subtle)] shadow-sm backdrop-blur-sm flex flex-col items-center">
               <AuroraBilateralWave isPlaying={isPlaying} height={72} positionSec={positionSec} className="w-full" />
-              <div className="w-full flex items-center justify-between px-2 pt-1 border-t border-[var(--border-subtle)]/40 text-[9px] font-mono text-[var(--accent-primary)] opacity-85 uppercase">
-                <span className="flex items-center gap-1.5">
-                  <span className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-emerald-400 animate-ping' : 'bg-neutral-500'}`} />
-                  {isPlaying ? 'Option 2: Aurora Bilateral Wave' : 'Harmonic Rest'}
-                </span>
-                <span>40–120 Hz Sub-Bass</span>
-              </div>
             </div>
           </div>
 
@@ -344,57 +335,19 @@ export const LivingRoomMode: React.FC<LivingRoomModeProps> = ({
             </div>
           )}
 
-          {/* Sync Calibration Nudge Toolbar & Reactions */}
-          <div className="flex flex-col gap-1.5 px-2">
-            {isSynced && lyrics.length > 0 && (
-              <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] bg-[var(--surface-card)] px-3 py-1.5 rounded-2xl border border-[var(--border-subtle)]">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-[10px] uppercase tracking-wider text-[var(--text-muted)]">Time Sync:</span>
-                  <button
-                    onClick={() => setSyncOffset(prev => parseFloat((prev - 0.25).toFixed(2)))}
-                    className="px-2 py-0.5 rounded text-[10px] font-mono bg-[var(--surface-hover)] hover:bg-[var(--border-subtle)] text-[var(--text-primary)] transition-colors"
-                    title="Nudge lyrics earlier (-0.25s)"
-                  >
-                    -0.25s
-                  </button>
-                  <span className="font-mono text-[10px] font-bold text-[var(--accent-primary)] px-1 min-w-[36px] text-center">
-                    {syncOffset > 0 ? `+${syncOffset.toFixed(2)}` : syncOffset.toFixed(2)}s
-                  </span>
-                  <button
-                    onClick={() => setSyncOffset(prev => parseFloat((prev + 0.25).toFixed(2)))}
-                    className="px-2 py-0.5 rounded text-[10px] font-mono bg-[var(--surface-hover)] hover:bg-[var(--border-subtle)] text-[var(--text-primary)] transition-colors"
-                    title="Nudge lyrics later (+0.25s)"
-                  >
-                    +0.25s
-                  </button>
-                  {syncOffset !== 0 && (
-                    <button
-                      onClick={() => setSyncOffset(0)}
-                      className="text-[9px] text-[var(--text-muted)] hover:text-[var(--accent-primary)] ml-1 underline transition-colors"
-                    >
-                      Reset
-                    </button>
-                  )}
-                </div>
-                <span className="text-[10px] font-mono text-[var(--accent-primary)]/80">
-                  {formatTime(effectiveTime)} / {formatTime(totalDuration)}
-                </span>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between pt-0.5">
-              <span className="text-[11px] text-[var(--text-muted)] font-medium">Click any lyric line to jump in song</span>
-              <div className="flex items-center gap-1.5">
-                {['❤️', '🔥', '👏', '✨'].map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => handleSendReaction(emoji)}
-                    className="px-2.5 py-1 rounded-full bg-[var(--surface-card)] hover:bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-xs transition-transform active:scale-125 shadow-sm"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
+          {/* Interactive Lyrics Reaction & Hints */}
+          <div className="flex items-center justify-between px-2 pt-1">
+            <span className="text-[11px] text-[var(--text-muted)] font-medium">Click any lyric line to jump in song</span>
+            <div className="flex items-center gap-1.5">
+              {['❤️', '🔥', '👏', '✨'].map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => handleSendReaction(emoji)}
+                  className="px-2.5 py-1 rounded-full bg-[var(--surface-card)] hover:bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-xs transition-transform active:scale-125 shadow-sm"
+                >
+                  {emoji}
+                </button>
+              ))}
             </div>
           </div>
 
